@@ -1,1 +1,1 @@
-rootProject.name = "FutbolApi"
+rootProject.name = "futbolapi"

@@ -6,9 +6,9 @@ plugins {
 	kotlin("plugin.jpa") version "1.9.25"
 }
 
-group = "com.GrupoB"
+group = "com.grupob"
 version = "0.0.1-SNAPSHOT"
-description = "FutbolApi"
+description = "Futbol Api Project for Spring Boot"
 
 java {
 	toolchain {
@@ -26,8 +26,6 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	developmentOnly("org.springframework.boot:spring-boot-devtools")
-	runtimeOnly("com.h2database:h2")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("org.springframework.security:spring-security-test")

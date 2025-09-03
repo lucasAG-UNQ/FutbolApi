@@ -1,11 +1,11 @@
-package com.GrupoB.FutbolApi
+package com.grupob.futbolapi
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class FutbolApiApplication
+class FutbolapiApplication
 
 fun main(args: Array<String>) {
-	runApplication<FutbolApiApplication>(*args)
+	runApplication<FutbolapiApplication>(*args)
 }
