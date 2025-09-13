@@ -69,6 +69,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
+      #Permit
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       #Make de Gradle Build
       - name: Build Kotlin JAR
         run: ./gradlew clean build
