@@ -39,7 +39,7 @@ class SecurityConfig(private val jwtAuthenticationFilter: JwtAuthenticationFilte
             }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
+                    .requestMatchers("/api/auth/**", "/h2-console/**", "/api/scraper/scrape", "/api/teams/**").permitAll()
                     .anyRequest().authenticated()
             }
             .headers { headers -> // Allow frames for H2 console
