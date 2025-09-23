@@ -7,6 +7,7 @@ import com.grupob.futbolapi.repositories.TeamRepository
 import com.microsoft.playwright.Browser
 import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Playwright
+import com.microsoft.playwright.PlaywrightException
 import com.microsoft.playwright.options.LoadState
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -38,7 +39,7 @@ class ScraperService(
                 val allTeamData = mutableListOf<Pair<String, String>>()
 
                 // Loop through all pages of the team statistics table
-                while (true) {
+                //while (true) {
                     page.waitForSelector("#top-team-stats-summary-content > tr")
                     val teamRows = page.querySelectorAll("#top-team-stats-summary-content > tr")
 
@@ -55,34 +56,42 @@ class ScraperService(
                     val nextButton = page.locator("#statistics-team-paging-summary > div > dl > dd > a#next")
                     // Check if the next button is disabled (it gets a class 'disabled')
                     val isNextDisabled = nextButton.evaluate("node => node.classList.contains('disabled')") as Boolean
-                    if (isNextDisabled) {
-                        break // Exit loop if on the last page
-                    } else {
-                        nextButton.click()
-                        page.waitForLoadState(LoadState.NETWORKIDLE)
-                    }
-                }
-
+                //    if (isNextDisabled) {
+                //        break // Exit loop if on the last page
+                //    } else {
+                //        nextButton.click()
+                //        page.waitForLoadState(LoadState.NETWORKIDLE)
+                //    }
+                //}
+                var count=0;
                 // Now, scrape players for each collected team
                 for ((teamName, teamUrl) in allTeamData) {
                     var team = teamRepository.findByName(teamName)
                     if (team == null) {
                         team = Team(name = teamName)
                     }
-
+                    count++
+                    println(count)
+                    println(team)
+                    println(teamName)
                     page.navigate(teamUrl, com.microsoft.playwright.Page.NavigateOptions().setTimeout(60000.0))
-                    page.waitForSelector("#top-player-stats-summary-grid > tbody > tr")
+                    page.waitForLoadState(LoadState.DOMCONTENTLOADED)
+                    page.waitForSelector("#top-player-stats-summary-grid > tbody > tr > td")
 
-                    val playerRows = page.querySelectorAll("#top-player-stats-summary-grid > tbody > tr")
 
+                    val playerRows = try {
+                        page.querySelectorAll("#top-player-stats-summary-grid tbody tr")
+                    } catch (e: PlaywrightException) {
+                        println("Rows not found: ${e.message}")
+                        emptyList()
+                    }
 
                     for (playerRow in playerRows) {
+                        println(playerRow)
                         val playerElementID = playerRow.querySelector("td:nth-child(1)")
                         val playerName = playerElementID.querySelector("a.player-link > span")?.innerText()
                         val position = playerElementID.querySelector("span > span:nth-child(1)")?.innerText() + playerElementID.querySelector("span > span:nth-child(2)")?.innerText()
-
                         println(playerName)
-
                         if (playerName != null && playerName.isNotEmpty()) {
                             val playerExists = team.players.any { it.name == playerName }
                             if (!playerExists) {

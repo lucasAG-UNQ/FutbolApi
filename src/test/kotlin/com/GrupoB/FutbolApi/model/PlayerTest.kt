@@ -1,6 +1,6 @@
 package com.grupob.futbolapi.model
 
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 class PlayerTest {
@@ -19,10 +19,10 @@ class PlayerTest {
         )
 
         // Then
-        assertEquals(1L, player.id)
-        assertEquals(playerName, player.name)
-        assertEquals(playerPosition, player.position)
-        assertNull(player.team, "Team should be null initially")
+        Assertions.assertEquals(1L, player.id)
+        Assertions.assertEquals(playerName, player.name)
+        Assertions.assertEquals(playerPosition, player.position)
+        Assertions.assertNull(player.team, "Team should be null initially")
     }
 
     @Test
@@ -39,10 +39,10 @@ class PlayerTest {
         player.team = team
 
         // Then
-        assertNotNull(player.team)
-        assertEquals(team, player.team)
-        assertEquals(team.id, player.team?.id)
-        assertEquals(team.name, player.team?.name)
+        Assertions.assertNotNull(player.team)
+        Assertions.assertEquals(team, player.team)
+        Assertions.assertEquals(team.id, player.team?.id)
+        Assertions.assertEquals(team.name, player.team?.name)
     }
 
     @Test
@@ -59,7 +59,7 @@ class PlayerTest {
         player.position = "Striker"
 
         // Then
-        assertEquals("Cristiano Ronaldo", player.name)
-        assertEquals("Striker", player.position)
+        Assertions.assertEquals("Cristiano Ronaldo", player.name)
+        Assertions.assertEquals("Striker", player.position)
     }
 }
