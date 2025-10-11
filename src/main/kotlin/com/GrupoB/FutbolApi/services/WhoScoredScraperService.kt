@@ -56,12 +56,18 @@ class WhoScoredScraperService(
         val json = JSONObject(body)
         val playersJSON = json.getJSONArray("playerTableStats")
 
+        val firstPlayer = playersJSON.getJSONObject(0)
+        val teamName=firstPlayer.getString("teamName")
+        val teamCountry= firstPlayer.getString("teamRegionName")
+        val teamID=firstPlayer.getLong("teamId")
+
+        val retTeam= Team(teamID,teamName,teamCountry)
+
         println("${Calendar.getInstance().time} - before mapping")
         val players = (0 until playersJSON.length()).map { i ->
             val p = playersJSON.getJSONObject(i)
             Player(
-                id=null,
-                whoscoredId = p.getLong("playerId"),
+                id = p.getLong("playerId"),
                 name = p.getString("name"),
                 position = p.optString("positionText"),
                 tournament = p.getString("tournamentName"),
@@ -73,21 +79,16 @@ class WhoScoredScraperService(
                 minutes = p.optInt("minsPlayed"),
                 yellowCards = p.optInt("yellowCard"),
                 redCards = p.optInt("redCard"),
-                age = p.optInt("age")
+                age = p.optInt("age"),
+                team=retTeam
             )
         }.toMutableList()
 
+        retTeam.players=players
+
         println("${Calendar.getInstance().time} - After player mapping")
 
-        val firstPlayer = playersJSON.getJSONObject(0)
-        val teamName=firstPlayer.getString("teamName")
-        val teamCountry= firstPlayer.getString("teamRegionName")
-        val teamID=firstPlayer.getLong("teamId")
-
-
-        println("${Calendar.getInstance().time} - Before ending getTeam")
-
-        return Team(null,teamID,teamName,teamCountry, players)
+        return retTeam
     }
 
     @Transactional

@@ -6,7 +6,6 @@ import jakarta.persistence.*
 @Table(name = "players")
 class Player(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
 
     @Column(nullable = false)
@@ -19,7 +18,6 @@ class Player(
     @JoinColumn(name = "team_id")
     var team: Team? = null,
 
-    val whoscoredId: Long,
     val tournament: String,
     val season: String,
     val apps: Int,

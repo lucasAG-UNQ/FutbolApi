@@ -29,7 +29,7 @@ class TeamController(private val teamService: TeamService,
                 mapOf("name" to player.name, "position" to player.position)
             }
             val teamDTO = mapOf(
-                "id" to team.whoscoredId,
+                "id" to team.id,
                 "name" to team.name,
                 "players" to playerDTOs
             )

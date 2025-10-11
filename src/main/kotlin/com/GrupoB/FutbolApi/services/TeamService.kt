@@ -24,7 +24,6 @@ class TeamService(private val teamRepository: TeamRepository,
         if (team==null) {
             team=scraperService.getTeam(teamId)
 
-            teamRepository.save(team)
 
             println("${Calendar.getInstance().time} - After saving")
         }
