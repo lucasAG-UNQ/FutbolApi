@@ -17,5 +17,17 @@ class Player(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_id")
-    var team: Team? = null
+    var team: Team? = null,
+
+    val whoscoredId: Long,
+    val tournament: String,
+    val season: String,
+    val apps: Int,
+    val goals: Int,
+    val assists: Int,
+    val rating: Double,
+    val minutes: Int,
+    val yellowCards: Int,
+    val redCards: Int,
+    val age: Int
 )
