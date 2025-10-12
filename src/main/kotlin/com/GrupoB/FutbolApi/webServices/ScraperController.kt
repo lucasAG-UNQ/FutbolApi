@@ -14,7 +14,9 @@ class ScraperController(private val scraperService: ScraperService) {
     @PostMapping("/scrape")
     fun scrapeData(): ResponseEntity<String> {
         logger.info("POST /api/scraper/scrape received")
-        scraperService.scrapeAndSaveData()
-        return ResponseEntity.ok("Data scraped and saved successfully")
+        Thread {
+            scraperService.scrapeAndSaveData()
+        }.start()
+        return ResponseEntity.ok("Data scrape request sent successfully")
     }
 }
