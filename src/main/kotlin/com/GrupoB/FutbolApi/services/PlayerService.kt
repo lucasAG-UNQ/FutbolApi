@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class PlayerService(private val playerRepository: PlayerRepository) {
+class PlayerService(val playerRepository: PlayerRepository) {
     @Transactional
     fun saveAll(players: List<Player>) {
         playerRepository.saveAll(players)

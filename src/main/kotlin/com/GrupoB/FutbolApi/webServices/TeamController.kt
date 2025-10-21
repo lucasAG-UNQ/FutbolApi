@@ -1,5 +1,9 @@
 package com.grupob.futbolapi.webServices
 
+import com.grupob.futbolapi.model.Match
+import com.grupob.futbolapi.model.dto.MatchDTO
+import com.grupob.futbolapi.model.dto.PlayerDTO
+import com.grupob.futbolapi.model.dto.TeamDTO
 import com.grupob.futbolapi.services.TeamService
 import com.grupob.futbolapi.services.WhoScoredScraperService
 import org.slf4j.LoggerFactory
@@ -8,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.util.stream.Collectors
+
 
 @RestController
 @RequestMapping("/api/teams")
@@ -25,20 +31,19 @@ class TeamController(private val teamService: TeamService,
         logger.info("Service returned team: {}", team)
 
         return if (team != null) {
-            val playerDTOs = team.players.map { player ->
-                mapOf("name" to player.name, "position" to player.position)
-            }
-            val teamDTO = mapOf(
-                "id" to team.id,
-                "name" to team.name,
-                "players" to playerDTOs
-            )
+            val teamDTO = TeamDTO.fromModel(team)
             logger.info("Sending response DTO: {}", teamDTO)
             ResponseEntity.ok(teamDTO)
         } else {
             logger.warn("Team with name '{}' not found", teamID)
             ResponseEntity.status(404).body("Team not found")
         }
+    }
+
+    @GetMapping("/{teamID}/nextMatches")
+    fun getNextMatches(@PathVariable teamID: Long): ResponseEntity<Any> {
+        val matches = scraperService.getNextTeamMatches(teamID)
+        return ResponseEntity.ok(matches)
     }
 
     @GetMapping("/search/{searchParam}")

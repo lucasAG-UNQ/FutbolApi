@@ -1,6 +1,6 @@
 package com.grupob.futbolapi.webServices
 
-import com.grupob.futbolapi.services.ScraperService
+import com.grupob.futbolapi.services.WhoScoredScraperService
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping

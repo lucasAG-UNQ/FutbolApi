@@ -1,19 +1,33 @@
-package com.GrupoB.FutbolApi.model.dto
+package com.grupob.futbolapi.model.dto
 
-import com.GrupoB.FutbolApi.model.Match
+import com.grupob.futbolapi.model.Match
 import java.time.LocalDate
 
 class MatchDTO(
-    val homeTeam: TeamDTO,
-    val awayTeam: TeamDTO,
-    val date: LocalDate
+    val id:Long?,
+    val homeTeam: SimpleTeamDTO,
+    val awayTeam: SimpleTeamDTO,
+    val date: LocalDate,
+    val tournament: String?
 ) {
+    fun toModel(): Match {
+        return Match(
+            id = this.id,
+            homeTeam = null, //set in the service layer
+            awayTeam = null,
+            date = this.date,
+            tournament = tournament
+        )
+    }
+
     companion object {
         fun fromModel(match: Match): MatchDTO {
             return MatchDTO(
-                homeTeam = TeamDTO.fromModel(match.homeTeam),
-                awayTeam = TeamDTO.fromModel(match.awayTeam),
-                date = match.date
+                id = match.id,
+                homeTeam = SimpleTeamDTO(match.homeTeam!!.id!!, match.homeTeam!!.name),
+                awayTeam = SimpleTeamDTO(match.awayTeam!!.id!!, match.awayTeam!!.name),
+                date = match.date,
+                tournament = match.tournament,
             )
         }
     }
