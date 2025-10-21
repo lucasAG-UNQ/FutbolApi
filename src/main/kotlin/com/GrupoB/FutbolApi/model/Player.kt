@@ -6,7 +6,6 @@ import jakarta.persistence.*
 @Table(name = "players")
 class Player(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
 
     @Column(nullable = false)
@@ -17,5 +16,16 @@ class Player(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_id")
-    var team: Team? = null
+    var team: Team? = null,
+
+    val tournament: String,
+    val season: String,
+    val apps: Int,
+    val goals: Int,
+    val assists: Int,
+    val rating: Double,
+    val minutes: Int,
+    val yellowCards: Int,
+    val redCards: Int,
+    val age: Int
 )

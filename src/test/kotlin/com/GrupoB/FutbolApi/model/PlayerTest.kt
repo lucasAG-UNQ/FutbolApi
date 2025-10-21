@@ -28,7 +28,7 @@ class PlayerTest {
     @Test
     fun `test player association with a team`() {
         // Given
-        val team = Team(id = 1L, name = "FC Barcelona")
+        val team = Team(whoscoredId = 1L, name = "FC Barcelona")
         val player = Player(
             id = 10L,
             name = "Lionel Messi",
@@ -41,7 +41,7 @@ class PlayerTest {
         // Then
         Assertions.assertNotNull(player.team)
         Assertions.assertEquals(team, player.team)
-        Assertions.assertEquals(team.id, player.team?.id)
+        Assertions.assertEquals(team.whoscoredId, player.team?.whoscoredId)
         Assertions.assertEquals(team.name, player.team?.name)
     }
 

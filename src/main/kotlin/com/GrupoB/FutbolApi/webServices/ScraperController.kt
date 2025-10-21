@@ -9,14 +9,13 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/scraper")
-class ScraperController(private val scraperService: ScraperService) {
+class ScraperController(private val scraperService: WhoScoredScraperService) {
     private val logger = LoggerFactory.getLogger(ScraperController::class.java)
     @PostMapping("/scrape")
     fun scrapeData(): ResponseEntity<String> {
-        logger.info("POST /api/scraper/scrape received")
-        Thread {
-            scraperService.scrapeAndSaveData()
-        }.start()
-        return ResponseEntity.ok("Data scrape request sent successfully")
+        logger.info("POST /api/scrape received")
+        //scraperService.scrapeAndSaveData()
+        return ResponseEntity.ok("Data scraped and saved successfully")
     }
+
 }
