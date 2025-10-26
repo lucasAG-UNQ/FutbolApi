@@ -27,5 +27,5 @@ class Player(
     var minutes: Int?,
     var yellowCards: Int?,
     var redCards: Int?,
-    var age: Int?
+    var age: Int?,
 )

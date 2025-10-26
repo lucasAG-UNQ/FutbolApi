@@ -1,7 +1,5 @@
 package com.grupob.futbolapi.security
 
-import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.security.Keys
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -9,7 +7,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.userdetails.User
-import java.util.Date
 
 @DisplayName("JwtTokenProvider Unit Tests")
 class JwtTokenProviderTest {

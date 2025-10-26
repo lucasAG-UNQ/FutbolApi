@@ -1,10 +1,12 @@
 package com.grupob.futbolapi.services.implementation
 
+import com.grupob.futbolapi.exceptions.TeamNotFoundException
 import com.grupob.futbolapi.model.Team
 import com.grupob.futbolapi.repositories.TeamRepository
 import com.grupob.futbolapi.services.IPlayerService
 import com.grupob.futbolapi.services.ITeamService
 import com.grupob.futbolapi.services.IWhoScoredScraperService
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.Calendar
@@ -26,7 +28,7 @@ class TeamService(
 
     @Transactional
     override fun getTeamWithPlayers(teamId: Long): Team? {
-        var team = teamRepository.findByWhoscoredIdWithPlayers(teamId)
+        var team = teamRepository.findByIdWithPlayers(teamId)
         if (team == null) {
             team = scraperService.getTeam(teamId)
             // You might want to save the scraped team to your database here
@@ -34,5 +36,20 @@ class TeamService(
             println("${Calendar.getInstance().time} - After scraping")
         }
         return team
+    }
+
+    @Transactional
+    override fun predictMatch(teamA: Long, teamB: Long): Team? {
+        var teamHome:Team? = getTeamWithPlayers(teamA)
+        var teamAway:Team? = getTeamWithPlayers(teamB)
+
+        var res : Team? = null
+        if (teamHome == null) throw TeamNotFoundException("Home team with id ${teamA} was not found")
+        if (teamAway == null) throw TeamNotFoundException("Away team with id ${teamB} was not found")
+        val homeTeamRating = teamHome.players.map { player ->  player.rating?:0.0 }.average()
+        val awayTeamRating = teamAway.players.map { player ->  player.rating?:0.0 }.average()
+        res = if (homeTeamRating >= awayTeamRating) teamHome else teamAway
+
+        return res
     }
 }

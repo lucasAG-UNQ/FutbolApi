@@ -1,5 +1,6 @@
 package com.grupob.futbolapi.webServices
 
+import com.grupob.futbolapi.exceptions.TeamNotFoundException
 import com.grupob.futbolapi.model.dto.MatchDTO
 import com.grupob.futbolapi.model.dto.TeamDTO
 import com.grupob.futbolapi.services.ITeamService
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -50,6 +52,16 @@ class TeamController(
             ResponseEntity.notFound().build()
         } else {
             ResponseEntity.ok(search)
+        }
+    }
+
+    @GetMapping("/predict/{teamA}/{teamB}")
+    fun predictMatch(@PathVariable teamA: Long, @PathVariable teamB: Long): ResponseEntity<Any>{
+        return try {
+            val winningTeam = teamService.predictMatch(teamA,teamB)
+            ResponseEntity.ok().body(TeamDTO.fromModel(winningTeam!!))
+        } catch (e : TeamNotFoundException){
+            ResponseEntity.status(404).body(e.message)
         }
     }
 }

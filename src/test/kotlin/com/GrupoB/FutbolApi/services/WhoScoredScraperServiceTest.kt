@@ -4,12 +4,14 @@ import com.grupob.futbolapi.exceptions.TeamNotFoundException
 import com.grupob.futbolapi.services.implementation.WhoScoredScraperService
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.json.JSONException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.lang.NullPointerException
 import java.time.LocalDate
 
 @DisplayName("WhoScoredScraperService Unit Tests")
@@ -326,7 +328,7 @@ class WhoScoredScraperServiceTest {
             server.enqueue(MockResponse().setBody(mockJson))
 
             // Act & Assert
-            assertThrows(org.json.JSONException::class.java) { // Expect JSONException for missing key
+            assertThrows(JSONException::class.java) { // Expect JSONException for missing key
                 scraperService.getTeam(100L)
             }
         }
@@ -337,7 +339,7 @@ class WhoScoredScraperServiceTest {
             server.enqueue(MockResponse().setResponseCode(404))
 
             // Act & Assert
-            assertThrows(java.lang.NullPointerException::class.java) { // body?.string() will be null, leading to NPE on JSONObject(null)
+            assertThrows(NullPointerException::class.java) { // body?.string() will be null, leading to NPE on JSONObject(null)
                 scraperService.getTeam(100L)
             }
         }

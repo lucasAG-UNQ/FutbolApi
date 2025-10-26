@@ -13,5 +13,5 @@ interface TeamRepository : JpaRepository<Team, Long> {
     fun findByNameWithPlayers(name: String): Team?
 
     @Query("SELECT t FROM Team t LEFT JOIN FETCH t.players WHERE t.id = :id")
-    fun findByWhoscoredIdWithPlayers(id: Long):Team?
+    fun findByIdWithPlayers(id: Long):Team?
 }

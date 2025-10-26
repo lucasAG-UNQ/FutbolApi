@@ -16,5 +16,5 @@ class Team(
     var country: String,
 
     @OneToMany(mappedBy = "team", cascade = [CascadeType.ALL], orphanRemoval = true)
-    var players: MutableList<Player> = mutableListOf()
+    var players: MutableList<Player> = mutableListOf(),
 )

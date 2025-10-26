@@ -3,9 +3,7 @@ package com.grupob.futbolapi.services
 import com.grupob.futbolapi.model.builder.PlayerBuilder
 import com.grupob.futbolapi.model.builder.TeamBuilder
 import com.grupob.futbolapi.repositories.TeamRepository
-import com.grupob.futbolapi.services.implementation.PlayerService
 import com.grupob.futbolapi.services.implementation.TeamService
-import com.grupob.futbolapi.services.implementation.WhoScoredScraperService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.DisplayName
