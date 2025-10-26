@@ -49,7 +49,7 @@ class TeamController(
     fun searchTeams(@PathVariable searchParam: String): ResponseEntity<Any> {
         val search = scraperService.searchTeams(searchParam)
         return if (search.isEmpty()) {
-            ResponseEntity.notFound().build()
+            ResponseEntity.status(404).body("No teams found matching '${searchParam}'")
         } else {
             ResponseEntity.ok(search)
         }
