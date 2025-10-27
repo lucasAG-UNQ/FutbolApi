@@ -1,9 +1,10 @@
-package com.grupob.futbolapi.webServices
+package com.grupob.futbolapi.unit.webServices
 
-import com.grupob.futbolapi.model.builder.PlayerBuilder
-import com.grupob.futbolapi.model.builder.TeamBuilder
+import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
+import com.grupob.futbolapi.unit.model.builder.TeamBuilder
 import com.grupob.futbolapi.services.ITeamService
 import com.grupob.futbolapi.services.IWhoScoredScraperService
+import com.grupob.futbolapi.webServices.TeamController
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested

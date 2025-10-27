@@ -1,4 +1,4 @@
-package com.grupob.futbolapi.model.builder
+package com.grupob.futbolapi.unit.model.builder
 
 import com.grupob.futbolapi.model.User
 

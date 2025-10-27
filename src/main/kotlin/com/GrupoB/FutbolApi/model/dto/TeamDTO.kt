@@ -6,7 +6,7 @@ class TeamDTO(
     val id: Long?,
     val name: String,
     val country: String,
-    val players: List<PlayerDTO>
+    var players: List<PlayerDTO>
 ) {
     fun toModel(): Team {
         val team = Team(
@@ -24,9 +24,9 @@ class TeamDTO(
     }
 
     companion object {
-        fun fromModel(team: Team): TeamDTO {
+        fun fromModel(team: Team?): TeamDTO {
             return TeamDTO(
-                team.id,
+                team!!.id,
                 team.name,
                 team.country,
                 team.players.map { PlayerDTO.fromModel(it) }

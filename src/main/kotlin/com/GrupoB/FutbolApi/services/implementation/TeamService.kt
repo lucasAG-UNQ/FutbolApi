@@ -2,6 +2,7 @@ package com.grupob.futbolapi.services.implementation
 
 import com.grupob.futbolapi.exceptions.TeamNotFoundException
 import com.grupob.futbolapi.model.Team
+import com.grupob.futbolapi.model.dto.TeamDTO
 import com.grupob.futbolapi.repositories.TeamRepository
 import com.grupob.futbolapi.services.IPlayerService
 import com.grupob.futbolapi.services.ITeamService
@@ -30,7 +31,11 @@ class TeamService(
     override fun getTeamWithPlayers(teamId: Long): Team? {
         var team = teamRepository.findByIdWithPlayers(teamId)
         if (team == null) {
-            team = scraperService.getTeam(teamId)
+            team = try{
+                scraperService.getTeam(teamId).toModel()
+            } catch (e : TeamNotFoundException){
+                null
+            }
             // You might want to save the scraped team to your database here
             // teamRepository.save(team)
             println("${Calendar.getInstance().time} - After scraping")

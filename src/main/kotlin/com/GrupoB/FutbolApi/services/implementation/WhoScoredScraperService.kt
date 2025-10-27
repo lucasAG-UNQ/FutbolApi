@@ -1,10 +1,10 @@
 package com.grupob.futbolapi.services.implementation
 
 import com.grupob.futbolapi.exceptions.TeamNotFoundException
-import com.grupob.futbolapi.model.Player
-import com.grupob.futbolapi.model.Team
 import com.grupob.futbolapi.model.dto.MatchDTO
+import com.grupob.futbolapi.model.dto.PlayerDTO
 import com.grupob.futbolapi.model.dto.SimpleTeamDTO
+import com.grupob.futbolapi.model.dto.TeamDTO
 import com.grupob.futbolapi.services.IWhoScoredScraperService
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -18,14 +18,15 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Service
-class WhoScoredScraperService : IWhoScoredScraperService {
+class WhoScoredScraperService(
+    private val client: OkHttpClient,
+    private val baseURL: String = "https://www.whoscored.com"
+) : IWhoScoredScraperService {
 
     private val logger = LoggerFactory.getLogger(WhoScoredScraperService::class.java)
-    private val baseURL = "https://www.whoscored.com"
 
     @Transactional
-    override fun getTeam(teamID: Long): Team {
-        val client = OkHttpClient()
+    override fun getTeam(teamID: Long): TeamDTO {
         val url = "$baseURL/statisticsfeed/1/getplayerstatistics?category=summary&subcategory=all&statsAccumulationType=0&isCurrent=true&teamIds=$teamID&sortBy=Rating&sortAscending=&field=Overall&isMinApp=false&includeZeroValues=true"
 
         val request = Request.Builder()
@@ -36,6 +37,7 @@ class WhoScoredScraperService : IWhoScoredScraperService {
 
         val response = client.newCall(request).execute()
         val body = response.body?.string()
+        if(body==null || !response.isSuccessful)throw TeamNotFoundException("Team with id $teamID doesn't seems to exist")
         val json = JSONObject(body)
         val playersJSON = json.getJSONArray("playerTableStats")
 
@@ -46,37 +48,35 @@ class WhoScoredScraperService : IWhoScoredScraperService {
         val teamCountry = firstPlayer.getString("teamRegionName")
         val teamIDFromJson = firstPlayer.getLong("teamId")
 
-        val retTeam = Team(teamIDFromJson, teamName, teamCountry)
 
         val players = (0 until playersJSON.length()).map { i ->
             val p = playersJSON.getJSONObject(i)
-            Player(
+            PlayerDTO(
                 id = p.getLong("playerId"),
-                name = p.getString("name"),
-                position = p.optString("positionText"),
-                tournament = p.getString("tournamentName"),
-                season = p.getString("seasonName"),
-                apps = p.optInt("apps"),
-                goals = p.optInt("goal"),
-                assists = p.optInt("assistTotal"),
-                rating = p.optDouble("rating"),
-                minutes = p.optInt("minsPlayed"),
-                yellowCards = p.optInt("yellowCard"),
-                redCards = p.optInt("redCard"),
-                age = p.optInt("age"),
-                team = retTeam
+                name = p.optString("name",null),
+                position = p.optString("positionText",null),
+                team = SimpleTeamDTO(teamIDFromJson,teamName),
+                tournament = p.optString("tournamentName",null),
+                season = p.optString("seasonName",null),
+                apps = p.opt("apps") as? Int,
+                goals = p.opt("goal") as? Int,
+                assists = p.opt("assistTotal") as? Int,
+                rating = p.opt("rating") as? Double,
+                minutes = p.opt("minsPlayed") as? Int,
+                yellowCards = p.opt("yellowCard") as? Int,
+                redCards = p.opt("redCard") as? Int,
+                age = p.opt("age") as? Int
             )
         }.toMutableList()
 
-        retTeam.players = players
-
-        return retTeam
+        return TeamDTO(
+            teamIDFromJson, teamName, teamCountry, players
+        )
     }
 
     @Transactional
     override fun searchTeams(searchParam: String): List<SimpleTeamDTO> {
         val titleText = "Teams:"
-        val client = OkHttpClient()
         val url = "$baseURL/search/?t=$searchParam"
 
         val request = Request.Builder()
@@ -116,7 +116,6 @@ class WhoScoredScraperService : IWhoScoredScraperService {
 
     override fun getNextTeamMatches(teamId: Long): List<MatchDTO> {
         logger.debug("Starting getNextTeamMatches for teamId: {}", teamId)
-        val client = OkHttpClient()
         val url = "$baseURL/teams/$teamId/fixtures"
         logger.debug("Requesting URL: {}", url)
 
@@ -145,11 +144,8 @@ class WhoScoredScraperService : IWhoScoredScraperService {
                 .replace("'", "\"")
                 .replace(", ,", ", null,")
 
-            return try {
-                parseFixtures("[$arrayText]")
-            } catch (e: Exception) {
-                emptyList()
-            }
+            return parseFixtures("[$arrayText]")
+
         }
     }
 
@@ -160,7 +156,7 @@ class WhoScoredScraperService : IWhoScoredScraperService {
         for (i in 0 until root.length()) {
             val arr = root.getJSONArray(i)
 
-            val date = LocalDate.parse(arr.getString(2), DateTimeFormatter.ofPattern("dd-MM-yy"))
+            val date = LocalDate.parse(arr.optString(2), DateTimeFormatter.ofPattern("dd-MM-yy"))
 
             val homeTeam = SimpleTeamDTO(
                 teamID = arr.getLong(4),

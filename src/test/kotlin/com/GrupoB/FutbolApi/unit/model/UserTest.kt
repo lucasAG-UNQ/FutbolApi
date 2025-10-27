@@ -1,6 +1,6 @@
-package com.grupob.futbolapi.model
+package com.grupob.futbolapi.unit.model
 
-import com.grupob.futbolapi.model.builder.UserBuilder
+import com.grupob.futbolapi.unit.model.builder.UserBuilder
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested

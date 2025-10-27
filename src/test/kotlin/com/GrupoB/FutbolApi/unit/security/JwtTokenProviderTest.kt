@@ -1,5 +1,6 @@
-package com.grupob.futbolapi.security
+package com.grupob.futbolapi.unit.security
 
+import com.grupob.futbolapi.security.JwtTokenProvider
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
