@@ -23,12 +23,6 @@ ext {
     set("mockwebserverVersion", "4.9.3")
 }
 
-sonarqube {
-    properties {
-        property("sonar.coverage.exclusions", "src/test/**/*")
-    }
-}
-
 tasks.test {
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
