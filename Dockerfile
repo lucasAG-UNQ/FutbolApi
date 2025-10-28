@@ -2,7 +2,7 @@
 # Stage 1 — build with Gradle
 FROM gradle:8.7-jdk21-alpine AS builder
 WORKDIR /app
-COPY build.gradle settings.gradle ./
+COPY build.gradle* settings.gradle* ./
 COPY src ./src
 RUN gradle clean build -x test --no-daemon
 
