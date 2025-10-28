@@ -8,10 +8,6 @@ on:
 jobs:
   sonar:
     runs-on: ubuntu-latest
-    env:
-      SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
-      SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - uses: actions/checkout@v3
 
@@ -36,8 +32,8 @@ jobs:
         run: ./gradlew clean build test jacocoTestReport
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarcloud-github-action@v2.1.0
         with:
-          projectKey: lucasAG-UNQ_FutbolApi
-          organization: lucasAG-UNQ
+          projectKey: ${{ vars.SONAR_PROJECT_KEY }}
+          organization: ${{ vars.SONAR_ORGANIZATION }}
           token: ${{ secrets.SONAR_TOKEN }}
