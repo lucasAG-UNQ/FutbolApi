@@ -9,6 +9,19 @@ plugins {
     id("org.sonarqube") version "7.0.1.6134"
 }
 
+tasks.withType<org.springframework.boot.gradle.tasks.bundling.BootJar> {
+    mainClass.set("com.grupob.futbolapi.FutbolApiApplication")
+}
+
+sourceSets {
+    main {
+        kotlin.srcDirs("src/main/kotlin")
+    }
+    test {
+        kotlin.srcDirs("src/test/kotlin")
+    }
+}
+
 // Centralized dependency versions
 ext {
     set("kotlinVersion", "1.9.25")
@@ -59,12 +72,8 @@ application {
     mainClass.set("com.grupob.futbolapi.FutbolApiApplication")
 }
 
-tasks.jar {
-    manifest {
-        attributes["Main-Class"] = "com.grupob.futbolapi.FutbolApiApplication"
-    }
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+springBoot {
+    mainClass.set("com.grupob.futbolapi.FutbolApiApplication")
 }
 
 dependencies {
