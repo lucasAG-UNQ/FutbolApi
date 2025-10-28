@@ -17,10 +17,6 @@ class TeamService(
     private val playerService: IPlayerService
 ) : ITeamService {
 
-    override fun getTeam(teamName: String): Team? {
-        return teamRepository.findByNameWithPlayers(teamName)
-    }
-
     override fun getTeamWithPlayers(teamName: String): Team? {
         return teamRepository.findByNameWithPlayers(teamName)
     }
@@ -30,10 +26,10 @@ class TeamService(
         var team = teamRepository.findByIdWithPlayers(teamId)
         if (team == null) {
             team = try{
-                scraperService.getTeam(teamId).toModel()
+                scraperService.getTeam(teamId)
             } catch (e : TeamNotFoundException){
                 null
-            }
+            }?.toModel()
             // You might want to save the scraped team to your database here
             // teamRepository.save(team)
             println("${Calendar.getInstance().time} - After scraping")
@@ -47,10 +43,10 @@ class TeamService(
         var teamAway:Team? = getTeamWithPlayers(teamB)
 
         var res : Team?
-        if (teamHome == null) throw TeamNotFoundException("Home team with id ${teamA} was not found")
-        if (teamAway == null) throw TeamNotFoundException("Away team with id ${teamB} was not found")
-        val homeTeamRating = teamHome.players.map { player ->  player.rating?:0.0 }.average()
-        val awayTeamRating = teamAway.players.map { player ->  player.rating?:0.0 }.average()
+        if (teamHome == null) throw TeamNotFoundException("Home team with id $teamA was not found")
+        if (teamAway == null) throw TeamNotFoundException("Away team with id $teamB was not found")
+        val homeTeamRating = teamHome.players.map { player ->  player.rating?:0.0 }.average().takeIf { it.isNaN().not() } ?: -1.0
+        val awayTeamRating = teamAway.players.map { player ->  player.rating?:0.0 }.average().takeIf { it.isNaN().not() } ?: -1.0
         res = if (homeTeamRating >= awayTeamRating) teamHome else teamAway
 
         return res

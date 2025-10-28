@@ -11,6 +11,7 @@ import com.grupob.futbolapi.services.IWhoScoredScraperService
 import com.grupob.futbolapi.services.implementation.TeamService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -147,6 +148,106 @@ class TeamServiceTest {
             // Verify both repository and scraper were called
             verify(teamRepository).findByIdWithPlayers(teamId)
             verify(scraperService).getTeam(teamId)
+        }
+    }
+
+    @Nested
+    @DisplayName("when predictMatch is called")
+    inner class PredictMatch {
+
+        private lateinit var teamA: Team
+        private lateinit var teamB: Team
+
+        @BeforeEach
+        fun setUp() {
+            val playerA1 = PlayerBuilder().withRating(8.0).build()
+            val playerA2 = PlayerBuilder().withRating(9.0).build() // Avg: 8.5
+            teamA = TeamBuilder().withId(1L).withName("Team A").withPlayers(listOf(playerA1, playerA2)).build()
+
+            val playerB1 = PlayerBuilder().withRating(7.0).build()
+            val playerB2 = PlayerBuilder().withRating(8.0).build() // Avg: 7.5
+            teamB = TeamBuilder().withId(2L).withName("Team B").withPlayers(listOf(playerB1, playerB2)).build()
+        }
+
+        @Test
+        fun itShouldPredictTeamAToWinWhenTheirAverageRatingIsHigher() {
+            // Arrange
+            `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamA)
+            `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(teamB)
+
+            // Act
+            val winner = teamService.predictMatch(1L, 2L)
+
+            // Assert
+            assertEquals(teamA, winner)
+        }
+
+        @Test
+        fun itShouldPredictTeamBToWinWhenTheirAverageRatingIsHigher() {
+            // Arrange
+            // Swap the teams to make B the winner
+            `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamB)
+            `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(teamA)
+
+            // Act
+            val winner = teamService.predictMatch(1L, 2L)
+
+            // Assert
+            assertEquals(teamA, winner) // The service returns the second team if their rating is higher
+        }
+
+        @Test
+        fun itShouldPredictTeamAHomeTeamToWinInADraw() {
+            // Arrange
+            val playerB3 = PlayerBuilder().withRating(10.0).build() // Make B's avg 8.5 too
+            teamB.players.add(playerB3)
+
+            `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamA)
+            `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(teamB)
+
+            // Act
+            val winner = teamService.predictMatch(1L, 2L)
+
+            // Assert
+            assertEquals(teamA, winner)
+        }
+
+        @Test
+        fun itShouldThrowTeamNotFoundExceptionIfTeamAIsNotFound() {
+            // Arrange
+            `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(null)
+            `when`(scraperService.getTeam(1L)).thenThrow(TeamNotFoundException::class.java)
+            // Act & Assert
+            assertThrows<TeamNotFoundException> {
+                teamService.predictMatch(1L, 2L)
+            }
+        }
+
+        @Test
+        fun itShouldThrowTeamNotFoundExceptionIfTeamBIsNotFound() {
+            // Arrange
+            `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamA)
+            `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(null)
+
+            // Act & Assert
+            assertThrows<TeamNotFoundException> {
+                teamService.predictMatch(1L, 2L)
+            }
+        }
+
+        @Test
+        fun itShouldHandleTeamsWithNoPlayers() {
+            // Arrange
+            val teamWithNoPlayers = TeamBuilder().withId(3L).withName("No Players FC").withPlayers(emptyList()).build()
+            `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamA)
+            `when`(teamRepository.findByIdWithPlayers(3L)).thenReturn(teamWithNoPlayers)
+
+            // Act
+            val winner = teamService.predictMatch(1L, 3L)
+
+            // Assert
+            assertEquals(teamA.id, winner?.id, "Team with players should win against team with no players")
+            assertEquals(teamA.name, winner?.name, "Team with players should win against team with no players")
         }
     }
 }

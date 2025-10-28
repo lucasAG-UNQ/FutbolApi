@@ -105,14 +105,14 @@ class WhoScoredScraperService(
             val res = ArrayList<SimpleTeamDTO>()
 
             for (row in rows) {
-                val firstTd = row.selectFirst("td") ?: continue
-                val link = firstTd.selectFirst("a") ?: continue
+                val firstTd = row.selectFirst("td")
+                val link = firstTd!!.selectFirst("a")
 
-                val teamName = link.text()
+                val teamName = link!!.text()
                 val href = link.attr("href")
-                val teamID = Regex("/teams/(\\d+)/").find(href)?.groupValues?.get(1)?.toLongOrNull() ?: continue
+                val teamID = Regex("/teams/(\\d+)/").find(href)?.groupValues?.get(1)?.toLong()
 
-                res.add(SimpleTeamDTO(teamID, teamName))
+                res.add(SimpleTeamDTO(teamID!!, teamName))
             }
 
             return res
