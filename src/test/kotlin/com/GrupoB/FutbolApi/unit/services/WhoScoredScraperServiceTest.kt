@@ -310,25 +310,25 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun shouldThrowJSONExceptionIfPlayerTableStatsIsEmpty() {
+        fun shouldThrowTeamNotFoundExceptionIfPlayerTableStatsIsEmpty() {
             // Arrange
             val mockJson = "{\"playerTableStats\": []}"
             server.enqueue(MockResponse().setBody(mockJson))
 
             // Act & Assert
-            assertThrows(JSONException::class.java) {
+            assertThrows(TeamNotFoundException::class.java) {
                 scraperService.getTeam(100L)
             }
         }
 
         @Test
-        fun shouldThrowJSONExceptionIfPlayerTableStatsIsMissing() {
+        fun shouldThrowTeamNotFoundExceptionIfPlayerTableStatsIsMissing() {
             // Arrange
             val mockJson = "{\"otherData\": \"value\"}"
             server.enqueue(MockResponse().setBody(mockJson))
 
             // Act & Assert
-            assertThrows(JSONException::class.java) {
+            assertThrows(TeamNotFoundException::class.java) {
                 scraperService.getTeam(100L)
             }
         }

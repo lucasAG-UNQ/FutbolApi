@@ -9,6 +9,7 @@ import com.grupob.futbolapi.services.IWhoScoredScraperService
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
@@ -39,11 +40,15 @@ class WhoScoredScraperService(
         val body = response.body?.string()
         if(body==null || !response.isSuccessful)throw TeamNotFoundException("Team with id $teamID doesn't seems to exist")
         val json = JSONObject(body)
-        val playersJSON = json.getJSONArray("playerTableStats")
+        val playersJSON = try {
+            json.getJSONArray("playerTableStats")
+        } catch (e: JSONException) {
+            throw TeamNotFoundException("Team with id $teamID doesn't seems to exist")
+        }
 
         if (playersJSON.length() == 0) throw TeamNotFoundException("Team with id $teamID doesn't seems to exist")
 
-        val firstPlayer = playersJSON.getJSONObject(0)
+        val firstPlayer = playersJSON.getJSONObject(0) ?: throw TeamNotFoundException("Team with id $teamID doesn't seems to exist")
         val teamName = firstPlayer.getString("teamName")
         val teamCountry = firstPlayer.getString("teamRegionName")
         val teamIDFromJson = firstPlayer.getLong("teamId")
