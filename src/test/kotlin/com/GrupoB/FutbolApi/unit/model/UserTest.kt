@@ -19,7 +19,7 @@ class UserTest {
 
         assertEquals(1L, user.id)
         assertEquals("testuser", user.username)
-        assertEquals("hashedpassword", user.password_hash)
+        assertEquals("hashedpassword", user.passwordHash)
     }
 
     @Test
@@ -32,7 +32,7 @@ class UserTest {
 
         assertNull(newUser.id, "A new user should have a null ID before being persisted")
         assertEquals("newuser", newUser.username)
-        assertEquals("newpass", newUser.password_hash)
+        assertEquals("newpass", newUser.passwordHash)
     }
 
     @Nested

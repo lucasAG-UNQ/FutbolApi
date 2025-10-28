@@ -5,11 +5,36 @@ plugins {
 	id("org.springframework.boot") version "3.5.5"
 	id("io.spring.dependency-management") version "1.1.7"
 	kotlin("plugin.jpa") version "1.9.25"
+    jacoco
+    id("org.sonarqube") version "7.0.1.6134"
+}
+
+sonarqube {
+    properties {
+        property("sonar.projectKey", "lucasAG-UNQ_FutbolApi")
+        property("sonar.organization", "FutbolApi")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.login", System.getenv("SONAR_TOKEN"))
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    reports {
+        xml.required.set(true)   // XML is needed by SonarCloud
+        html.required.set(true)
+    }
 }
 
 repositories {
     mavenCentral()
+    google()
 }
+
 
 group = "com.grupob"
 version = "0.0.1-SNAPSHOT"

@@ -16,7 +16,7 @@ class CustomUserDetailsService(private val userRepository: UserRepository) : Use
 
         return User.builder()
             .username(user.username)
-            .password(user.password_hash)
+            .password(user.passwordHash)
             .authorities(emptyList()) // Add roles/authorities here if you have them
             .build()
     }

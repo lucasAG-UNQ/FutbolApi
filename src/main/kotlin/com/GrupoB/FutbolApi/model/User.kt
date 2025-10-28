@@ -13,5 +13,5 @@ class User(
     var username: String,
 
     @Column(nullable = false)
-    var password_hash: String
+    var passwordHash: String
 )

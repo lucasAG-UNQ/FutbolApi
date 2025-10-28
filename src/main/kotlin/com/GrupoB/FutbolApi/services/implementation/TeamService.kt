@@ -2,12 +2,10 @@ package com.grupob.futbolapi.services.implementation
 
 import com.grupob.futbolapi.exceptions.TeamNotFoundException
 import com.grupob.futbolapi.model.Team
-import com.grupob.futbolapi.model.dto.TeamDTO
 import com.grupob.futbolapi.repositories.TeamRepository
 import com.grupob.futbolapi.services.IPlayerService
 import com.grupob.futbolapi.services.ITeamService
 import com.grupob.futbolapi.services.IWhoScoredScraperService
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.Calendar
@@ -48,7 +46,7 @@ class TeamService(
         var teamHome:Team? = getTeamWithPlayers(teamA)
         var teamAway:Team? = getTeamWithPlayers(teamB)
 
-        var res : Team? = null
+        var res : Team?
         if (teamHome == null) throw TeamNotFoundException("Home team with id ${teamA} was not found")
         if (teamAway == null) throw TeamNotFoundException("Away team with id ${teamB} was not found")
         val homeTeamRating = teamHome.players.map { player ->  player.rating?:0.0 }.average()

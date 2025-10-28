@@ -31,7 +31,7 @@ class AuthWebService(
 
         val user = User(
             username = registerRequest.username,
-            password_hash = passwordEncoder.encode(registerRequest.password)
+            passwordHash = passwordEncoder.encode(registerRequest.password)
         )
         userRepository.save(user)
 
