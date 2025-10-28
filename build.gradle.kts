@@ -12,7 +12,7 @@ plugins {
 sonarqube {
     properties {
         property("sonar.projectKey", "lucasAG-UNQ_FutbolApi")
-        property("sonar.organization", "FutbolApi")
+        property("sonar.organization", "lucasAG-UNQ")
         property("sonar.host.url", "https://sonarcloud.io")
         property("sonar.login", System.getenv("SONAR_TOKEN"))
     }
