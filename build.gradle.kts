@@ -11,10 +11,18 @@ plugins {
 
 sonarqube {
     properties {
-        property("sonar.projectKey", "lucasAG-UNQ_FutbolApi")
-        property("sonar.organization", "lucasAG-UNQ")
+        property("sonar.projectKey", System.getenv("SONAR_PROJECT_KEY"))
+        property("sonar.organization", System.getenv("SONAR_ORGANIZATION"))
         property("sonar.host.url", "https://sonarcloud.io")
         property("sonar.login", System.getenv("SONAR_TOKEN"))
+    }
+}
+
+tasks.register("checkSonarProps") {
+    doLast {
+        println("Project key: ${project.findProperty("sonar.projectKey")}")
+        println("Organization: ${project.findProperty("sonar.organization")}")
+        println("Login: ${System.getenv("SONAR_TOKEN")}")
     }
 }
 
