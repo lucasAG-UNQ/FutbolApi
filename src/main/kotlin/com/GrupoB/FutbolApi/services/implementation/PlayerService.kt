@@ -8,6 +8,10 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class PlayerService(private val playerRepository: PlayerRepository) : IPlayerService {
+    override fun save(player: Player) {
+        playerRepository.save(player)
+    }
+
     @Transactional
     override fun saveAll(players: List<Player>) {
         playerRepository.saveAll(players)
