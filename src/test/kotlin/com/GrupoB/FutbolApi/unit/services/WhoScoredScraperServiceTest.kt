@@ -40,7 +40,7 @@ class WhoScoredScraperServiceTest {
     @DisplayName("searchTeams")
     inner class SearchTeams {
         @Test
-        fun `should return a list of teams when search results are found`() {
+        fun shouldReturnAListOfTeamsWhenSearchResultsAreFound() {
             // Arrange
             val mockHtml = """
                 <html><body>
@@ -68,7 +68,7 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun `should return an empty list when no teams are found`() {
+        fun shouldReturnAnEmptyListWhenNoTeamsAreFound() {
             // Arrange
             val mockHtml = "<html><body><h2>Teams:</h2><p>No results found.</p></body></html>"
             server.enqueue(MockResponse().setBody(mockHtml))
@@ -81,7 +81,7 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun `should return an empty list when search page is not successful`() {
+        fun shouldReturnAnEmptyListWhenSearchPageIsNotSuccessful() {
             // Arrange
             server.enqueue(MockResponse().setResponseCode(404))
 
@@ -93,7 +93,7 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun `should return an empty list when search page html is empty`() {
+        fun shouldReturnAnEmptyListWhenSearchPageHtmlIsEmpty() {
             // Arrange
             server.enqueue(MockResponse().setBody(""))
 
@@ -109,7 +109,7 @@ class WhoScoredScraperServiceTest {
     @DisplayName("getNextTeamMatches")
     inner class GetNextTeamMatches {
         @Test
-        fun `should return a list of upcoming matches with individual parameter assertions`() {
+        fun shouldReturnAListOfUpcomingMatchesWithIndividualParameterAssertions() {
             // Arrange
             val mockHtml = """
                 <html><body>
@@ -153,7 +153,7 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun `should return an empty list when matches page is not successful`() {
+        fun shouldReturnAnEmptyListWhenMatchesPageIsNotSuccessful() {
             // Arrange
             server.enqueue(MockResponse().setResponseCode(500))
 
@@ -165,7 +165,7 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun `should return an empty list when matches page html is empty`() {
+        fun shouldReturnAnEmptyListWhenMatchesPageHtmlIsEmpty() {
             // Arrange
             server.enqueue(MockResponse().setBody(""))
 
@@ -177,7 +177,7 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun `should return an empty list when no fixtureMatches script is found`() {
+        fun shouldReturnAnEmptyListWhenNoFixtureMatchesScriptIsFound() {
             // Arrange
             val mockHtml = "<html><body><script>require.config.params['args'] = {teamId: 65,otherData: []};</script></body></html>"
             server.enqueue(MockResponse().setBody(mockHtml))
@@ -190,7 +190,7 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun `should return an empty list when fixtureMatches array is empty`() {
+        fun shouldReturnAnEmptyListWhenFixtureMatchesArrayIsEmpty() {
             // Arrange
             val mockHtml = "<html><body><script>require.config.params['args'] = {teamId: 65,fixtureMatches: []};</script></body></html>"
             server.enqueue(MockResponse().setBody(mockHtml))
@@ -203,14 +203,15 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun `should throw JSONException for malformed fixtureMatches array`() {
+        fun shouldThrowJSONExceptionForMalformedFixtureMatchesArray() {
             // Arrange - Malformed JSON array (missing closing bracket, extra comma, etc.)
             val mockHtml = """
                 <html><body>
                     <script>
                     require.config.params['args'] = {
                         teamId: 856741856496841,
-                        fixtureMatches: [['1', '1', '16-08-25', '18:30', 51, 'Mallorca', 2, 65, 'Barcelona', 0, '0 : 3', '0 : 2', 1, 1, 'FT', '2025/2026', 'LaLiga', '2', 4, 206, 10803, 24622, 'SLL', 'es', 'es', 0, 1, 0, 'Spain', 'Spain', 'Spain', '0', '3'];
+                        fixtureMatches: [['1', '1', '16-08-25', '18:30', 51, 'Mallorca', 2, 65, 'Barcelona', 0, '0 : 3', '0 : 2', 1, 1, 'FT', '2025/2026', 'LaLiga', '2', 4, 206, 10803, 24622, 'SLL', 'es', 'es', 0, 1, 0, 'Spain', 'Spain', 'Spain', '0', '3'
+                        ];
                     };
                     </script>
                 </body></html>
@@ -224,7 +225,7 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun `should throw DateTimeParseException for invalid date format`() {
+        fun shouldThrowDateTimeParseExceptionForInvalidDateFormat() {
             // Arrange - Invalid date format
             val mockHtml = """
                 <html><body>
@@ -249,7 +250,7 @@ class WhoScoredScraperServiceTest {
     @DisplayName("getTeam")
     inner class GetTeam {
         @Test
-        fun `should return a team with players`() {
+        fun shouldReturnATeamWithPlayers() {
             // Arrange
             val mockJson = """
                 {
@@ -282,7 +283,7 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun `should return a team with players even if some player fields are missing`() {
+        fun shouldReturnATeamWithPlayersEvenIfSomePlayerFieldsAreMissing() {
             // Arrange
             val mockJson = """
                 {
@@ -309,36 +310,36 @@ class WhoScoredScraperServiceTest {
         }
 
         @Test
-        fun `should throw JSONException if playerTableStats is empty`() {
+        fun shouldThrowJSONExceptionIfPlayerTableStatsIsEmpty() {
             // Arrange
             val mockJson = "{\"playerTableStats\": []}"
             server.enqueue(MockResponse().setBody(mockJson))
 
             // Act & Assert
-            assertThrows(TeamNotFoundException::class.java) { 
+            assertThrows(JSONException::class.java) {
                 scraperService.getTeam(100L)
             }
         }
 
         @Test
-        fun `should throw JSONException if playerTableStats is missing`() {
+        fun shouldThrowJSONExceptionIfPlayerTableStatsIsMissing() {
             // Arrange
             val mockJson = "{\"otherData\": \"value\"}"
             server.enqueue(MockResponse().setBody(mockJson))
 
             // Act & Assert
-            assertThrows(JSONException::class.java) { 
+            assertThrows(JSONException::class.java) {
                 scraperService.getTeam(100L)
             }
         }
 
         @Test
-        fun `should throw TeamNotFoundException for unsuccessful HTTP response for getTeam`() {
+        fun shouldThrowTeamNotFoundExceptionForUnsuccessfulHttpResponseForGetTeam() {
             // Arrange
             server.enqueue(MockResponse().setResponseCode(404))
 
             // Act & Assert
-            assertThrows(TeamNotFoundException::class.java) { 
+            assertThrows(TeamNotFoundException::class.java) {
                 scraperService.getTeam(100L)
             }
         }

@@ -22,6 +22,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
 
+private const val teamEndpoint = "/api/teams/{teamID}"
+
 @ExtendWith(MockitoExtension::class)
 @DisplayName("TeamController Unit Tests")
 class TeamControllerTest {
@@ -61,7 +63,7 @@ class TeamControllerTest {
             `when`(teamService.getTeamWithPlayers(teamId)).thenReturn(team)
 
             // Act & Assert
-            mockMvc.perform(get("/api/teams/{teamID}", teamId))
+            mockMvc.perform(get(teamEndpoint, teamId))
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(teamId))
@@ -75,7 +77,7 @@ class TeamControllerTest {
             `when`(teamService.getTeamWithPlayers(teamId)).thenReturn(null)
 
             // Act & Assert
-            mockMvc.perform(get("/api/teams/{teamID}", teamId))
+            mockMvc.perform(get(teamEndpoint, teamId))
                 .andExpect(status().isNotFound)
         }
     }

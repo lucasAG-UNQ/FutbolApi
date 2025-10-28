@@ -17,7 +17,7 @@ class PlayerTest {
     fun aPlayerCanBeCreatedWithAllValidData() {
         val player = PlayerBuilder()
             .withId(1L)
-            .withName("Test Player")
+            .withName("Roberto Carlos")
             .withPosition("Midfielder")
             .withTournament("La Liga")
             .withSeason("2023/2024")
@@ -32,7 +32,7 @@ class PlayerTest {
             .build()
 
         assertEquals(1L, player.id)
-        assertEquals("Test Player", player.name)
+        assertEquals("Roberto Carlos", player.name)
         assertEquals("Midfielder", player.position)
         assertEquals("La Liga", player.tournament)
         assertEquals(25, player.age)
@@ -98,8 +98,8 @@ class PlayerTest {
 
         @BeforeEach
         fun setUp() {
-            player = PlayerBuilder().withId(1L).withName("Test Player").build()
-            team = TeamBuilder().withId(10L).withName("Test United").build()
+            player = PlayerBuilder().withId(1L).withName("La Pulga").build()
+            team = TeamBuilder().withId(10L).withName("MancherTest United").build()
         }
 
         @Test
