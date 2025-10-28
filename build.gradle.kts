@@ -25,7 +25,7 @@ ext {
 
 sonarqube {
     properties {
-        property("sonar.login", System.getenv("SONAR_TOKEN"))
+        property("sonar.coverage.exclusions", "src/test/**/*")
     }
 }
 
