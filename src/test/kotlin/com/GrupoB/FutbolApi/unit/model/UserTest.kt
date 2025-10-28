@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 class UserTest {
 
     @Test
-    fun `a User can be created with valid data`() {
+    fun aUserCanBeCreatedWithValidData() {
         val user = UserBuilder()
             .withId(1L)
             .withUsername("testuser")
@@ -23,7 +23,7 @@ class UserTest {
     }
 
     @Test
-    fun `a User can be created with a null id`() {
+    fun aUserCanBeCreatedWithANullId() {
         val newUser = UserBuilder()
             .withId(null)
             .withUsername("newuser")
@@ -40,7 +40,7 @@ class UserTest {
     inner class EqualityTests {
 
         @Test
-        fun `two User instances with different ids are not equal`() {
+        fun twoUserInstancesWithDifferentIdsAreNotEqual() {
             val user1 = UserBuilder().withId(1L).build()
             val user2 = UserBuilder().withId(2L).build()
 
@@ -48,7 +48,7 @@ class UserTest {
         }
 
         @Test
-        fun `a User is not equal to an object of a different type`() {
+        fun aUserIsNotEqualToAnObjectOfADifferentType() {
             val user = UserBuilder().withId(1L).build()
             val otherObject = Any()
 
@@ -56,14 +56,14 @@ class UserTest {
         }
 
         @Test
-        fun `a User is not equal to null`() {
+        fun aUserIsNotEqualToNull() {
             val user = UserBuilder().withId(1L).build()
 
             assertNotEquals(null, user, "User should not be equal to null")
         }
 
         @Test
-        fun `a User is equal to itself`() {
+        fun aUserIsEqualToItself() {
             val user = UserBuilder().withId(1L).build()
 
             assertEquals(user, user, "User should be equal to itself")

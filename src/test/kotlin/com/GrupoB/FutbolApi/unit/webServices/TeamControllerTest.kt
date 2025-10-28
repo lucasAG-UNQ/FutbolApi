@@ -1,5 +1,6 @@
 package com.grupob.futbolapi.unit.webServices
 
+import com.grupob.futbolapi.model.Team
 import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
 import com.grupob.futbolapi.unit.model.builder.TeamBuilder
 import com.grupob.futbolapi.services.ITeamService
@@ -25,17 +26,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 @DisplayName("TeamController Unit Tests")
 class TeamControllerTest {
 
-
-    // Using @MockitoBean as requested to mock the service layer
     @Mock
     private lateinit var teamService: ITeamService
 
     @Mock
     private lateinit var scraperService: IWhoScoredScraperService
 
-
     @InjectMocks
-    lateinit var teamController: TeamController
+    private lateinit var teamController: TeamController
 
     private lateinit var mockMvc: MockMvc
 
@@ -48,13 +46,18 @@ class TeamControllerTest {
     @DisplayName("GET /api/teams/{teamID}")
     inner class GetTeamById {
 
-        @Test
-        fun `should return 200 OK with team data when team is found`() {
-            // Arrange
-            val teamId = 10L
-            val player = PlayerBuilder().withId(1L).withName("Jude Bellingham").withPosition("Midfielder").build()
-            val team = TeamBuilder().withId(teamId).withName("Real Madrid").withPlayer(player).build()
+        private var teamId: Long = 10L
+        private lateinit var team: Team
 
+        @BeforeEach
+        fun setUp() {
+            val player = PlayerBuilder().withId(1L).withName("Jude Bellingham").withPosition("Midfielder").build()
+            team = TeamBuilder().withId(teamId).withName("Real Madrid").withPlayer(player).build()
+        }
+
+        @Test
+        fun shouldReturn200OKWithTeamDataWhenTeamIsFound() {
+            // Arrange
             `when`(teamService.getTeamWithPlayers(teamId)).thenReturn(team)
 
             // Act & Assert
@@ -67,9 +70,8 @@ class TeamControllerTest {
         }
 
         @Test
-        fun `should return 404 Not Found when team is not found`() {
+        fun shouldReturn404NotFoundWhenTeamIsNotFound() {
             // Arrange
-            val teamId = 99L
             `when`(teamService.getTeamWithPlayers(teamId)).thenReturn(null)
 
             // Act & Assert

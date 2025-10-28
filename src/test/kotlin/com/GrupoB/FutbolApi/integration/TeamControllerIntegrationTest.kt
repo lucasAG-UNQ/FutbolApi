@@ -41,20 +41,20 @@ class TeamControllerIntegrationTest {
 
     @Test
     @WithMockUser // Run this test with a mock authenticated user
-    fun `GET should return 200 OK and the correct team data from the database`() {
+    fun getShouldReturn200OKAndTheCorrectTeamDataFromTheDatabase() {
         // Act & Assert
         mockMvc.perform(get("/api/teams/{teamID}", savedTeam.id))
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(savedTeam.id!!))
-            .andExpect(jsonPath("$.name").value("Integration Test Team"))
-            .andExpect(jsonPath("$.country").value("Testland"))
+            .andExpect(jsonPath("$.name").value(savedTeam.name))
+            .andExpect(jsonPath("$.country").value(savedTeam.country))
             .andExpect(jsonPath("$.players").isEmpty())
     }
 
     @Test
     @WithMockUser // Also secure this test endpoint
-    fun `GET should return 404 Not Found for a non-existent team ID`() {
+    fun getShouldReturn404NotFoundForANonExistentTeamID() {
         // Arrange
         val nonExistentId = 9999L
 
@@ -64,7 +64,7 @@ class TeamControllerIntegrationTest {
     }
 
     @Test
-    fun `GET should return 401 Unauthorized without a user`() {
+    fun getShouldReturn401UnauthorizedWithoutAUser() {
         // Act & Assert
         // This test verifies that the endpoint is indeed protected
         mockMvc.perform(get("/api/teams/{teamID}", savedTeam.id))

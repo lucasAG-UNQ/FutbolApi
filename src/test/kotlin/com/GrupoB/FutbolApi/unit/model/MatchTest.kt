@@ -12,7 +12,7 @@ import java.time.LocalDate
 class MatchTest {
 
     @Test
-    fun `a Match can be created with valid data`() {
+    fun aMatchCanBeCreatedWithValidData() {
         val homeTeam = TeamBuilder().withId(10L).withName("Real Madrid").build()
         val awayTeam = TeamBuilder().withId(20L).withName("Barcelona").build()
         val matchDate = LocalDate.of(2024, 10, 26)
@@ -35,7 +35,7 @@ class MatchTest {
     }
 
     @Test
-    fun `a Match can be created with default builder values`() {
+    fun aMatchCanBeCreatedWithDefaultBuilderValues() {
         val match = MatchBuilder().build()
 
         assertNull(match.id)
@@ -52,7 +52,7 @@ class MatchTest {
     inner class EqualityTests {
 
         @Test
-        fun `two Match instances with different ids are not equal`() {
+        fun twoMatchInstancesWithDifferentIdsAreNotEqual() {
             val match1 = MatchBuilder().withId(1L).build()
             val match2 = MatchBuilder().withId(2L).build()
 
@@ -60,7 +60,7 @@ class MatchTest {
         }
 
         @Test
-        fun `a Match is not equal to an object of a different type`() {
+        fun aMatchIsNotEqualToAnObjectOfADifferentType() {
             val match = MatchBuilder().withId(1L).build()
             val otherObject = Any()
 
@@ -68,14 +68,14 @@ class MatchTest {
         }
 
         @Test
-        fun `a Match is not equal to null`() {
+        fun aMatchIsNotEqualToNull() {
             val match = MatchBuilder().withId(1L).build()
 
             assertNotEquals(null, match, "Match should not be equal to null")
         }
 
         @Test
-        fun `a Match is equal to itself`() {
+        fun aMatchIsEqualToItself() {
             val match = MatchBuilder().withId(1L).build()
 
             assertEquals(match, match, "Match should be equal to itself")

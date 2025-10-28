@@ -13,79 +13,74 @@ import org.springframework.security.core.userdetails.User
 class JwtTokenProviderTest {
 
     private lateinit var jwtTokenProvider: JwtTokenProvider
+    private lateinit var authentication: Authentication
+    private lateinit var token: String
+
     private val testSecret = "thisIsASecretKeyForTestingThatIsLongEnough"
     private val testExpiration: Long = 3600000 // 1 hour
+    private val testUsername = "testuser"
 
     @BeforeEach
     fun setUp() {
         jwtTokenProvider = JwtTokenProvider(testSecret, testExpiration)
-    }
-
-    private fun createTestAuthentication(username: String): Authentication {
-        val userDetails = User.withUsername(username).password("password").authorities("USER").build()
-        return UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
+        val userDetails = User.withUsername(testUsername).password("password").authorities("USER").build()
+        authentication = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
+        token = jwtTokenProvider.generateToken(authentication)
     }
 
     @Test
-    fun `should generate a valid token`() {
-        val authentication = createTestAuthentication("testuser")
-        val token = jwtTokenProvider.generateToken(authentication)
-
+    fun shouldGenerateAValidToken() {
         assertNotNull(token)
         assertTrue(token.isNotEmpty())
     }
 
     @Test
-    fun `should extract the correct username from a valid token`() {
-        val username = "testuser"
-        val authentication = createTestAuthentication(username)
-        val token = jwtTokenProvider.generateToken(authentication)
-
+    fun shouldExtractTheCorrectUsernameFromAValidToken() {
         val extractedUsername = jwtTokenProvider.getUsernameFromToken(token)
-
-        assertEquals(username, extractedUsername)
+        assertEquals(testUsername, extractedUsername)
     }
 
     @Test
-    fun `should validate a correct and unexpired token`() {
-        val authentication = createTestAuthentication("testuser")
-        val token = jwtTokenProvider.generateToken(authentication)
-
+    fun shouldValidateACorrectAndUnexpiredToken() {
         assertTrue(jwtTokenProvider.validateToken(token))
     }
 
     @Test
-    fun `should fail validation for an expired token`() {
+    fun shouldFailValidationForAnExpiredToken() {
+        // Arrange
         val expiredProvider = JwtTokenProvider(testSecret, -1000) // Negative expiration
-        val authentication = createTestAuthentication("testuser")
         val expiredToken = expiredProvider.generateToken(authentication)
 
+        // Act & Assert
         assertFalse(jwtTokenProvider.validateToken(expiredToken))
     }
 
     @Test
-    fun `should fail validation for a token signed with a different key`() {
+    fun shouldFailValidationForATokenSignedWithADifferentKey() {
+        // Arrange
         val otherSecret = "anotherSecretKeyThatIsAlsoLongEnoughForTesting"
         val otherProvider = JwtTokenProvider(otherSecret, testExpiration)
-        val authentication = createTestAuthentication("testuser")
         val tokenFromOtherProvider = otherProvider.generateToken(authentication)
 
+        // Act & Assert
         assertFalse(jwtTokenProvider.validateToken(tokenFromOtherProvider))
     }
 
     @Test
-    fun `should fail validation for a malformed token`() {
+    fun shouldFailValidationForAMalformedToken() {
+        // Arrange
         val malformedToken = "this.is.not.a.jwt"
 
+        // Act & Assert
         assertFalse(jwtTokenProvider.validateToken(malformedToken))
     }
 
     @Test
-    fun `should fail validation for a token with an invalid signature`() {
-        val authentication = createTestAuthentication("testuser")
-        val token = jwtTokenProvider.generateToken(authentication)
-        val invalidToken = token.substring(0, token.lastIndexOf('.')) + ".invalidSignature"
+    fun shouldFailValidationForATokenWithAnInvalidSignature() {
+        // Arrange
+        val invalidToken = token.take(token.lastIndexOf('.')) + ".invalidSignature"
 
+        // Act & Assert
         assertFalse(jwtTokenProvider.validateToken(invalidToken))
     }
 }

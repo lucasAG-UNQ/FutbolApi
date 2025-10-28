@@ -1,8 +1,11 @@
 package com.grupob.futbolapi.unit.model
 
+import com.grupob.futbolapi.model.Player
+import com.grupob.futbolapi.model.Team
 import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
 import com.grupob.futbolapi.unit.model.builder.TeamBuilder
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -11,7 +14,7 @@ import org.junit.jupiter.api.Test
 class TeamTest {
 
     @Test
-    fun `a Team can be created with valid data`() {
+    fun aTeamCanBeCreatedWithValidData() {
         val team = TeamBuilder()
             .withId(1L)
             .withName("Test Team")
@@ -23,7 +26,7 @@ class TeamTest {
     }
 
     @Test
-    fun `a Team can be created with a null id`() {
+    fun aTeamCanBeCreatedWithANullId() {
         val newTeam = TeamBuilder()
             .withId(null)
             .withName("New Team")
@@ -38,7 +41,7 @@ class TeamTest {
     inner class EqualityTests {
 
         @Test
-        fun `two Team instances with different ids are not equal`() {
+        fun twoTeamInstancesWithDifferentIdsAreNotEqual() {
             val team1 = TeamBuilder().withId(1L).build()
             val team2 = TeamBuilder().withId(2L).build()
 
@@ -46,7 +49,7 @@ class TeamTest {
         }
 
         @Test
-        fun `a Team is not equal to an object of a different type`() {
+        fun aTeamIsNotEqualToAnObjectOfADifferentType() {
             val team = TeamBuilder().withId(1L).build()
             val otherObject = Any()
 
@@ -54,14 +57,14 @@ class TeamTest {
         }
 
         @Test
-        fun `a Team is not equal to null`() {
+        fun aTeamIsNotEqualToNull() {
             val team = TeamBuilder().withId(1L).build()
 
             assertNotEquals(null, team, "Team should not be equal to null")
         }
 
         @Test
-        fun `a Team is equal to itself`() {
+        fun aTeamIsEqualToItself() {
             val team = TeamBuilder().withId(1L).build()
 
             assertEquals(team, team, "Team should be equal to itself")
@@ -72,46 +75,60 @@ class TeamTest {
     @DisplayName("Player List Management Tests")
     inner class PlayerManagementTests {
 
-        @Test
-        fun `the TeamBuilder correctly adds a player`() {
-            val player = PlayerBuilder().withId(101L).build()
-            val team = TeamBuilder().withId(1L).withPlayer(player).build()
+        private lateinit var team: Team
+        private lateinit var player1: Player
+        private lateinit var player2: Player
 
-            assertEquals(1, team.players.size)
-            assertTrue(team.players.contains(player))
+        @BeforeEach
+        fun setUp() {
+            team = TeamBuilder().withId(1L).build()
+            player1 = PlayerBuilder().withId(101L).build()
+            player2 = PlayerBuilder().withId(102L).build()
         }
 
         @Test
-        fun `the TeamBuilder correctly sets the bidirectional relationship`() {
-            val player = PlayerBuilder().withId(101L).build()
-            val team = TeamBuilder().withId(1L).withPlayer(player).build()
+        fun theTeamBuilderCorrectlyAddsAPlayer() {
+            // Act
+            val teamWithPlayer = TeamBuilder().withId(1L).withPlayer(player1).build()
 
-            assertNotNull(player.team, "The builder should have set the player\'s team reference")
-            assertEquals(team, player.team, "The player\'s team reference should be the newly built team")
+            // Assert
+            assertEquals(1, teamWithPlayer.players.size)
+            assertTrue(teamWithPlayer.players.contains(player1))
         }
 
         @Test
-        fun `removing a player from a team's player list works`() {
-            val player = PlayerBuilder().withId(101L).build()
-            val team = TeamBuilder().withId(1L).withPlayer(player).build()
+        fun theTeamBuilderCorrectlySetsTheBidirectionalRelationship() {
+            // Act
+            val teamWithPlayer = TeamBuilder().withId(1L).withPlayer(player1).build()
 
+            // Assert
+            assertNotNull(player1.team, "The builder should have set the player\'s team reference")
+            assertEquals(teamWithPlayer, player1.team, "The player\'s team reference should be the newly built team")
+        }
+
+        @Test
+        fun removingAPlayerFromATeamsPlayerListWorks() {
+            // Arrange
+            team.players.add(player1)
             assertEquals(1, team.players.size)
 
-            team.players.remove(player)
+            // Act
+            team.players.remove(player1)
 
+            // Assert
             assertTrue(team.players.isEmpty(), "The players list should be empty after removing the player")
         }
 
         @Test
-        fun `clearing the player list works`() {
-            val player1 = PlayerBuilder().withId(101L).build()
-            val player2 = PlayerBuilder().withId(102L).build()
-            val team = TeamBuilder().withId(1L).withPlayers(listOf(player1, player2)).build()
-
+        fun clearingThePlayerListWorks() {
+            // Arrange
+            team.players.addAll(listOf(player1, player2))
             assertEquals(2, team.players.size)
 
+            // Act
             team.players.clear()
 
+            // Assert
             assertTrue(team.players.isEmpty(), "The players list should be empty after being cleared")
         }
     }

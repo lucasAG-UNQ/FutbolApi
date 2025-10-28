@@ -4,6 +4,7 @@ import com.grupob.futbolapi.model.Player
 import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
 import com.grupob.futbolapi.repositories.PlayerRepository
 import com.grupob.futbolapi.services.implementation.PlayerService
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -22,13 +23,17 @@ class PlayerServiceTest {
     @InjectMocks
     private lateinit var playerService: PlayerService
 
-    @Test
-    fun `saveAll should call the repository's saveAll method with the correct list of players`() {
-        // Arrange
+    private lateinit var playersToSave: List<Player>
+
+    @BeforeEach
+    fun setUp() {
         val player1 = PlayerBuilder().withId(1L).withName("Player One").build()
         val player2 = PlayerBuilder().withId(2L).withName("Player Two").build()
-        val playersToSave = listOf(player1, player2)
+        playersToSave = listOf(player1, player2)
+    }
 
+    @Test
+    fun saveAllShouldCallTheRepositorysSaveAllMethodWithTheCorrectListOfPlayers() {
         // Act
         playerService.saveAll(playersToSave)
 
@@ -39,7 +44,7 @@ class PlayerServiceTest {
     }
 
     @Test
-    fun `saveAll should handle an empty list without errors`() {
+    fun saveAllShouldHandleAnEmptyListWithoutErrors() {
         // Arrange
         val emptyPlayerList = emptyList<Player>()
 

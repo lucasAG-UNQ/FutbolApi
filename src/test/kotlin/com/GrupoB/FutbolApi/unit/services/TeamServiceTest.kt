@@ -1,6 +1,7 @@
 package com.grupob.futbolapi.unit.services
 
 import com.grupob.futbolapi.exceptions.TeamNotFoundException
+import com.grupob.futbolapi.model.Team
 import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
 import com.grupob.futbolapi.unit.model.builder.TeamBuilder
 import com.grupob.futbolapi.unit.model.builder.TeamDTOBuilder
@@ -10,6 +11,7 @@ import com.grupob.futbolapi.services.IWhoScoredScraperService
 import com.grupob.futbolapi.services.implementation.TeamService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -41,13 +43,19 @@ class TeamServiceTest {
     @DisplayName("when getTeamWithPlayers(teamName: String) is called")
     inner class GetTeamWithPlayersByName {
 
-        @Test
-        fun `it should return the team when found by the repository`() {
-            // Arrange
-            val teamName = "Real Madrid"
-            val player = PlayerBuilder().withId(1L).withName("Jude Bellingham").build()
-            val expectedTeam = TeamBuilder().withId(10L).withName(teamName).withPlayer(player).build()
+        private lateinit var teamName: String
+        private lateinit var expectedTeam: Team
 
+        @BeforeEach
+        fun setUp() {
+            teamName = "Real Madrid"
+            val player = PlayerBuilder().withId(1L).withName("Jude Bellingham").build()
+            expectedTeam = TeamBuilder().withId(10L).withName(teamName).withPlayer(player).build()
+        }
+
+        @Test
+        fun itShouldReturnTheTeamWhenFoundByTheRepository() {
+            // Arrange
             `when`(teamRepository.findByNameWithPlayers(teamName)).thenReturn(expectedTeam)
 
             // Act
@@ -62,9 +70,8 @@ class TeamServiceTest {
         }
 
         @Test
-        fun `it should return null when the team is not found by the repository`() {
+        fun itShouldReturnNullWhenTheTeamIsNotFoundByTheRepository() {
             // Arrange
-            val teamName = "NonExistent Team"
             `when`(teamRepository.findByNameWithPlayers(teamName)).thenReturn(null)
 
             // Act
@@ -81,21 +88,24 @@ class TeamServiceTest {
     @DisplayName("when getTeamWithPlayers(teamId: Long) is called")
     inner class GetTeamWithPlayersById {
 
-        @Test
-        fun `it should return the team from the repository if it exists`() {
-            // Arrange
-            val teamId = 10L
-            val expectedTeam = TeamBuilder().withId(teamId).withName("Cached Team").build()
+        private var teamId: Long = 10L
+        private lateinit var team: Team
 
-            `when`(teamRepository.findByIdWithPlayers(teamId)).thenReturn(expectedTeam)
+        @BeforeEach
+        fun setUp() {
+            team = TeamBuilder().withId(teamId).withName("Cached Team").build()
+        }
+
+        @Test
+        fun itShouldReturnTheTeamFromTheRepositoryIfItExists() {
+            // Arrange
+            `when`(teamRepository.findByIdWithPlayers(teamId)).thenReturn(team)
 
             // Act
             val actualTeam = teamService.getTeamWithPlayers(teamId)
 
             // Assert
-            assertEquals(expectedTeam, actualTeam)
-            assertEquals(teamId, actualTeam?.id)
-            assertEquals("Cached Team", actualTeam?.name)
+            assertEquals(team, actualTeam)
 
             // Verify repository was called, but scraper was not
             verify(teamRepository).findByIdWithPlayers(teamId)
@@ -103,14 +113,10 @@ class TeamServiceTest {
         }
 
         @Test
-        fun `it should call the scraper service if the team does not exist in the repository`() {
+        fun itShouldCallTheScraperServiceIfTheTeamDoesNotExistInTheRepository() {
             // Arrange
-            val teamId = 20L
             val scrapedTeamDto = TeamDTOBuilder().withId(teamId).withName("Scraped Team").build()
-
-            // Mock repository to return empty Optional
             `when`(teamRepository.findByIdWithPlayers(teamId)).thenReturn(null)
-            // Mock scraper to return a team
             `when`(scraperService.getTeam(teamId)).thenReturn(scrapedTeamDto)
 
             // Act
@@ -126,18 +132,17 @@ class TeamServiceTest {
         }
 
         @Test
-        fun `it should throw an exception if the scraper fails`() {
+        fun itShouldReturnNullIfTheScraperFails() {
             // Arrange
-            val teamId = 30L
             val scraperException = TeamNotFoundException("Team with id $teamId doesn't seem to exist")
-
-            // Mock repository to return empty Optional
             `when`(teamRepository.findByIdWithPlayers(teamId)).thenReturn(null)
-            // Mock scraper to throw an exception
             `when`(scraperService.getTeam(teamId)).thenThrow(scraperException)
 
-            // Act & Assert
-            assertNull(teamService.getTeamWithPlayers(teamId))
+            // Act
+            val actualTeam = teamService.getTeamWithPlayers(teamId)
+
+            // Assert
+            assertNull(actualTeam)
 
             // Verify both repository and scraper were called
             verify(teamRepository).findByIdWithPlayers(teamId)
