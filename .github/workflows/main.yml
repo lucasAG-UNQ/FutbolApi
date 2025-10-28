@@ -1,0 +1,19 @@
+name: Deploy to Render
+
+on:
+  workflow_run:
+    workflows: ["Docker Build and Push"]  # the workflow that publishes Docker
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: https://api.render.com/deploy/srv-d3vvnsjuibrs73cd5ej0
+          method: POST
+          headers: |
+            Authorization: Bearer ${{ secrets.RENDER_API_KEY }}
