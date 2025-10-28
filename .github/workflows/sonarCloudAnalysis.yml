@@ -24,7 +24,7 @@ jobs:
         run: ./gradlew clean build test jacocoTestReport
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v4.0.0
+        uses: SonarSource/sonarqube-scan-action@v6
         with:
           args: >
             -Dsonar.projectKey= ${{ vars.SONAR_PROJECT_KEY }}
