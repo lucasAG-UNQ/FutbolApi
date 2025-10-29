@@ -30,11 +30,7 @@ class WhoScoredScraperService(
     override fun getTeam(teamID: Long): TeamDTO {
         val url = "$baseURL/statisticsfeed/1/getplayerstatistics?category=summary&subcategory=all&statsAccumulationType=0&isCurrent=true&teamIds=$teamID&sortBy=Rating&sortAscending=&field=Overall&isMinApp=false&includeZeroValues=true"
 
-        val request = Request.Builder()
-            .url(url)
-            .header("User-Agent", "Mozilla/5.0")
-            .header("Referer", "https://www.whoscored.com/Teams/$teamID")
-            .build()
+        val request = buildRequest(url)
 
         val response = client.newCall(request).execute()
         val body = response.body?.string()
@@ -84,10 +80,7 @@ class WhoScoredScraperService(
         val titleText = "Teams:"
         val url = "$baseURL/search/?t=$searchParam"
 
-        val request = Request.Builder()
-            .url(url)
-            .header("User-Agent", "Mozilla/5.0")
-            .build()
+        val request = buildRequest(url)
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
@@ -124,10 +117,7 @@ class WhoScoredScraperService(
         val url = "$baseURL/teams/$teamId/fixtures"
         logger.debug("Requesting URL: {}", url)
 
-        val request = Request.Builder()
-            .url(url)
-            .header("User-Agent", "Mozilla/5.0")
-            .build()
+        val request = buildRequest(url)
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
@@ -185,4 +175,12 @@ class WhoScoredScraperService(
 
         return fixtures
     }
+    private fun buildRequest(url: String): Request = Request.Builder()
+        .url(url)
+        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
+        .header("Referer", "https://www.google.com/")
+        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        .header("Accept-Language", "en-US,en;q=0.9")
+        .build()
 }
+
