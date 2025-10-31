@@ -34,6 +34,7 @@ ext {
     set("jsonVersion", "20230227")
     set("h2Version", "2.2.224") // Example version, h2 was unversioned
     set("mockwebserverVersion", "4.9.3")
+    set("springdocVersion", "2.8.4")
 }
 
 tasks.test {
@@ -87,6 +88,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:${project.extra["okhttpVersion"]}")
     implementation("org.json:json:${project.extra["jsonVersion"]}")
     implementation(kotlin("stdlib"))
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${project.extra["springdocVersion"]}")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:${project.extra["jjwtVersion"]}")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:${project.extra["jjwtVersion"]}")
     runtimeOnly("com.h2database:h2") // H2 version managed by Spring Boot

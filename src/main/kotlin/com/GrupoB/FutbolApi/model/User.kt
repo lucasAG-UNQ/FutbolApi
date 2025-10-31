@@ -13,5 +13,8 @@ class User(
     var username: String,
 
     @Column(nullable = false)
-    var passwordHash: String
+    var passwordHash: String,
+
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    val requests: MutableList<Request> = mutableListOf()
 )

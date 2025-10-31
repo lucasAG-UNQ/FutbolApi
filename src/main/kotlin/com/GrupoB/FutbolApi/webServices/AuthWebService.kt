@@ -1,8 +1,11 @@
 package com.grupob.futbolapi.webServices
 
 import com.grupob.futbolapi.model.User
+import com.grupob.futbolapi.model.dto.RequestDTO
+import com.grupob.futbolapi.repositories.RequestRepository
 import com.grupob.futbolapi.repositories.UserRepository
 import com.grupob.futbolapi.security.JwtTokenProvider
+import io.swagger.v3.oas.annotations.Operation
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -20,10 +23,12 @@ class AuthWebService(
     private val authenticationManager: AuthenticationManager,
     private val tokenProvider: JwtTokenProvider,
     private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    private val requestRepository: RequestRepository
 ) {
 
     @PostMapping("/register")
+    @Operation(summary = "Registers a new user")
     fun registerUser(@RequestBody registerRequest: RegisterRequest): ResponseEntity<*> {
         if (userRepository.findByUsername(registerRequest.username) != null) {
             return ResponseEntity.badRequest().body("Username is already taken!")
@@ -39,6 +44,7 @@ class AuthWebService(
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Authenticates a user and returns a JWT token")
     fun authenticateUser(@RequestBody loginRequest: LoginRequest): ResponseEntity<*> {
         val authentication = authenticationManager.authenticate(
             UsernamePasswordAuthenticationToken(
@@ -50,5 +56,19 @@ class AuthWebService(
         SecurityContextHolder.getContext().authentication = authentication
         val token = tokenProvider.generateToken(authentication)
         return ResponseEntity.ok(LoginResponse(token))
+    }
+
+    @GetMapping("/history")
+    @Operation(summary = "Gets the request history for the authenticated user")
+    fun getRequestHistory(): ResponseEntity<List<RequestDTO>> {
+        val username = SecurityContextHolder.getContext().authentication.name
+        val user = userRepository.findByUsername(username)
+        return if (user != null) {
+            val requests = requestRepository.findByUserId(user.id!!)
+            val requestDTOs = requests.map { RequestDTO(it.endpoint, it.timestamp.toString()) }
+            ResponseEntity.ok(requestDTOs)
+        } else {
+            ResponseEntity.status(404).body(null)
+        }
     }
 }
