@@ -2,6 +2,7 @@ package com.grupob.futbolapi.unit.webServices
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.grupob.futbolapi.model.User
+import com.grupob.futbolapi.repositories.RequestRepository
 import com.grupob.futbolapi.repositories.UserRepository
 import com.grupob.futbolapi.security.JwtTokenProvider
 import com.grupob.futbolapi.webServices.AuthWebService
@@ -46,6 +47,9 @@ class AuthWebServiceTest {
 
     @Mock
     private lateinit var passwordEncoder: PasswordEncoder
+
+    @Mock
+    private lateinit var requestRepository: RequestRepository
 
     @InjectMocks
     private lateinit var authWebService: AuthWebService

@@ -3,6 +3,8 @@ package com.grupob.futbolapi.unit.webServices
 import com.grupob.futbolapi.model.Team
 import com.grupob.futbolapi.model.dto.MatchDTO
 import com.grupob.futbolapi.model.dto.SimpleTeamDTO
+import com.grupob.futbolapi.repositories.RequestRepository
+import com.grupob.futbolapi.repositories.UserRepository
 import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
 import com.grupob.futbolapi.unit.model.builder.TeamBuilder
 import com.grupob.futbolapi.services.ITeamService
@@ -35,6 +37,12 @@ class TeamControllerTest {
 
     @Mock
     private lateinit var scraperService: IWhoScoredScraperService
+
+    @Mock
+    private lateinit var userRepository: UserRepository
+
+    @Mock
+    private lateinit var requestRepository: RequestRepository
 
     @InjectMocks
     private lateinit var teamController: TeamController
