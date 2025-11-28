@@ -6,7 +6,6 @@ import jakarta.persistence.*
 @Table(name = "teams")
 class Team(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
 
     @Column(unique = true, nullable = false)
@@ -15,6 +14,6 @@ class Team(
     @Column(nullable = false)
     var country: String,
 
-    @OneToMany(mappedBy = "team", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "team", cascade = [CascadeType.ALL], orphanRemoval = false)
     var players: MutableList<Player> = mutableListOf(),
 )

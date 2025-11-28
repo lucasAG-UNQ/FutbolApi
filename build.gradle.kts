@@ -35,6 +35,13 @@ ext {
     set("h2Version", "2.2.224") // Example version, h2 was unversioned
     set("mockwebserverVersion", "4.9.3")
     set("springdocVersion", "2.8.4")
+    set("archunitVersion", "1.3.0")
+}
+
+configurations {
+    all {
+        exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
+    }
 }
 
 tasks.test {
@@ -81,6 +88,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-log4j2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("io.jsonwebtoken:jjwt-api:${project.extra["jjwtVersion"]}")
@@ -89,6 +97,9 @@ dependencies {
     implementation("org.json:json:${project.extra["jsonVersion"]}")
     implementation(kotlin("stdlib"))
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${project.extra["springdocVersion"]}")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation ("org.springframework.boot:spring-boot-starter-actuator")
+    implementation ("io.micrometer:micrometer-registry-prometheus")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:${project.extra["jjwtVersion"]}")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:${project.extra["jjwtVersion"]}")
     runtimeOnly("com.h2database:h2") // H2 version managed by Spring Boot
@@ -96,6 +107,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("com.squareup.okhttp3:mockwebserver:${project.extra["mockwebserverVersion"]}")
+    testImplementation("com.tngtech.archunit:archunit-junit5:${project.extra["archunitVersion"]}")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

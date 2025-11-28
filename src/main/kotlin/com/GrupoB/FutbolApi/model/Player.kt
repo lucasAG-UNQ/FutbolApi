@@ -6,7 +6,6 @@ import jakarta.persistence.*
 @Table(name = "players")
 class Player(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
 
     @Column(nullable = false)

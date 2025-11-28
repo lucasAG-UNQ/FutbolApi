@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+@Transactional
 @Service
 class WhoScoredScraperService(
     private val client: OkHttpClient,
@@ -52,24 +53,40 @@ class WhoScoredScraperService(
 
         val players = (0 until playersJSON.length()).map { i ->
             val p = playersJSON.getJSONObject(i)
+
+            val pid = p.getLong("playerId")
+            val pname = p.optString("name",null)
+            val pposition = p.optString("positionText",null)
+            val pteam = SimpleTeamDTO(teamIDFromJson,teamName)
+            val ptournament = p.optString("tournamentName",null)
+            val pseason = p.optString("seasonName",null)
+            val papps = p.getDouble("apps").toInt()
+            val pgoals = p.getDouble("goal").toInt()
+            val passists = p.getDouble("assistTotal").toInt()
+            val prating = p.getDouble("rating")
+            val pminutes = p.getDouble("minsPlayed").toInt()
+            val pyellowCards = p.getDouble("yellowCard").toInt()
+            val predCards = p.getDouble("redCard").toInt()
+            val page = p.getDouble("age").toInt()
+
+
             PlayerDTO(
-                id = p.getLong("playerId"),
-                name = p.optString("name",null),
-                position = p.optString("positionText",null),
-                team = SimpleTeamDTO(teamIDFromJson,teamName),
-                tournament = p.optString("tournamentName",null),
-                season = p.optString("seasonName",null),
-                apps = p.opt("apps") as? Int,
-                goals = p.opt("goal") as? Int,
-                assists = p.opt("assistTotal") as? Int,
-                rating = p.opt("rating") as? Double,
-                minutes = p.opt("minsPlayed") as? Int,
-                yellowCards = p.opt("yellowCard") as? Int,
-                redCards = p.opt("redCard") as? Int,
-                age = p.opt("age") as? Int
+                id = pid,
+                name = pname,
+                position = pposition,
+                team = pteam,
+                tournament = ptournament,
+                season = pseason,
+                apps = papps,
+                goals = pgoals,
+                assists = passists,
+                rating = prating,
+                minutes = pminutes,
+                yellowCards = pyellowCards,
+                redCards = predCards,
+                age = page
             )
         }.toMutableList()
-
         return TeamDTO(
             teamIDFromJson, teamName, teamCountry, players
         )

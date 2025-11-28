@@ -1,0 +1,12 @@
+2025-11-28 18:12:58.821 | INFO  | Timestamp: 2025-11-28 18:12:58.725 | User: anonymousUser | Operation: AuthWebService.registerUser(..) | Parameters: [RegisterRequest(username=lucas, password=1234)] | Execution Time: 94ms
+2025-11-28 18:13:00.528 | INFO  | Timestamp: 2025-11-28 18:13:00.343 | User: anonymousUser | Operation: AuthWebService.authenticateUser(..) | Parameters: [LoginRequest(username=lucas, password=1234)] | Execution Time: 185ms
+2025-11-28 18:14:15.724 | INFO  | Timestamp: 2025-11-28 18:14:14.905 | User: lucas | Operation: TeamController.getTeamWithPlayers(..) | Parameters: [889] | Execution Time: 819ms
+2025-11-28 18:21:07.059 | INFO  | Timestamp: 2025-11-28 18:21:06.966 | User: anonymousUser | Operation: AuthWebService.registerUser(..) | Parameters: [RegisterRequest(username=lucas, password=1234)] | Execution Time: 91ms
+2025-11-28 18:21:08.616 | INFO  | Timestamp: 2025-11-28 18:21:08.431 | User: anonymousUser | Operation: AuthWebService.authenticateUser(..) | Parameters: [LoginRequest(username=lucas, password=1234)] | Execution Time: 185ms
+2025-11-28 18:21:15.274 | INFO  | Timestamp: 2025-11-28 18:21:14.371 | User: lucas | Operation: TeamController.getTeamWithPlayers(..) | Parameters: [889] | Execution Time: 903ms
+2025-11-28 18:22:21.664 | INFO  | Timestamp: 2025-11-28 18:22:21.566 | User: anonymousUser | Operation: AuthWebService.registerUser(..) | Parameters: [RegisterRequest(username=lucas, password=1234)] | Execution Time: 97ms
+2025-11-28 18:22:24.483 | INFO  | Timestamp: 2025-11-28 18:22:24.273 | User: anonymousUser | Operation: AuthWebService.authenticateUser(..) | Parameters: [LoginRequest(username=lucas, password=1234)] | Execution Time: 210ms
+2025-11-28 18:22:27.868 | INFO  | Timestamp: 2025-11-28 18:22:27.863 | User: lucas | Operation: AuthWebService.getRequestHistory() | Parameters: [] | Execution Time: 5ms
+2025-11-28 18:22:35.585 | INFO  | Timestamp: 2025-11-28 18:22:34.586 | User: lucas | Operation: TeamController.getNextMatches(..) | Parameters: [346] | Execution Time: 1000ms
+2025-11-28 18:22:41.163 | INFO  | Timestamp: 2025-11-28 18:22:40.800 | User: lucas | Operation: TeamController.getTeamWithPlayers(..) | Parameters: [889] | Execution Time: 363ms
+2025-11-28 18:22:42.725 | INFO  | Timestamp: 2025-11-28 18:22:42.711 | User: lucas | Operation: TeamController.getTeamWithPlayers(..) | Parameters: [889] | Execution Time: 14ms
