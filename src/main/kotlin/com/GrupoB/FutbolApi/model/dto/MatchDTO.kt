@@ -8,7 +8,9 @@ class MatchDTO(
     val homeTeam: SimpleTeamDTO,
     val awayTeam: SimpleTeamDTO,
     val date: LocalDate,
-    val tournament: String?
+    val tournament: String?,
+    val homeScore: Int?,
+    val awayScore: Int?
 ) {
     fun toModel(): Match {
         return Match(
@@ -16,7 +18,9 @@ class MatchDTO(
             homeTeam = null, //set in the service layer
             awayTeam = null,
             date = this.date,
-            tournament = tournament
+            tournament = tournament,
+            homeScore = homeScore,
+            awayScore = awayScore
         )
     }
 
@@ -28,6 +32,8 @@ class MatchDTO(
                 awayTeam = SimpleTeamDTO(match.awayTeam!!.id!!, match.awayTeam!!.name),
                 date = match.date,
                 tournament = match.tournament,
+                homeScore = match.homeScore,
+                awayScore = match.awayScore
             )
         }
     }

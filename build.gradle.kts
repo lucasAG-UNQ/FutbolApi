@@ -36,6 +36,7 @@ ext {
     set("mockwebserverVersion", "4.9.3")
     set("springdocVersion", "2.8.4")
     set("archunitVersion", "1.3.0")
+    set("fuzzywuzzyVersion","1.4.0")
 }
 
 configurations {
@@ -100,6 +101,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation ("org.springframework.boot:spring-boot-starter-actuator")
     implementation ("io.micrometer:micrometer-registry-prometheus")
+    implementation("me.xdrop:fuzzywuzzy:${project.extra["fuzzywuzzyVersion"]}")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:${project.extra["jjwtVersion"]}")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:${project.extra["jjwtVersion"]}")
     runtimeOnly("com.h2database:h2") // H2 version managed by Spring Boot

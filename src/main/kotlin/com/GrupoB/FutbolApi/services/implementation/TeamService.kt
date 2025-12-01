@@ -1,5 +1,6 @@
 package com.grupob.futbolapi.services.implementation
 
+import com.grupob.futbolapi.services.implementation.FootballDataApi
 import com.grupob.futbolapi.exceptions.TeamNotFoundException
 import com.grupob.futbolapi.model.Player
 import com.grupob.futbolapi.model.Team
@@ -9,8 +10,10 @@ import com.grupob.futbolapi.repositories.TeamRepository
 import com.grupob.futbolapi.services.IPlayerService
 import com.grupob.futbolapi.services.ITeamService
 import com.grupob.futbolapi.services.IWhoScoredScraperService
+import org.json.JSONObject
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 import java.util.Calendar
 import kotlin.math.exp
 import kotlin.math.pow
@@ -20,7 +23,8 @@ import kotlin.math.pow
 class TeamService(
     private val teamRepository: TeamRepository,
     private val scraperService: IWhoScoredScraperService,
-    private val playerService: IPlayerService
+    private val playerService: IPlayerService,
+    private val footballDataApi: FootballDataApi
 ) : ITeamService {
 
     override fun getTeamWithPlayers(teamName: String): Team? {
@@ -30,25 +34,23 @@ class TeamService(
     }
 
     override fun getTeamWithPlayers(teamId: Long): Team? {
-        // First, try to fetch the team from our database.
         val existingTeam = teamRepository.findByIdWithPlayers(teamId)
-        if (existingTeam != null) {
+
+        if (existingTeam != null && existingTeam.lastUpdated.isAfter(LocalDateTime.now().minusDays(1))) {
             existingTeam.players = mergePlayerStats(existingTeam.players)
             return existingTeam
         }
 
-        // If not found, scrape it from the external service.
         val scrapedTeam = try {
             scraperService.getTeam(teamId)
         } catch (e: TeamNotFoundException) {
-            return null // The team doesn't exist anywhere.
+            return null
         }
 
-        // Convert the DTO to a model and save it.
         val teamToSave = scrapedTeam.toModel()
         teamToSave.players = mergePlayerStats(teamToSave.players)
+        teamToSave.lastUpdated = LocalDateTime.now()
 
-        // 1. Save the parent Team first to make it a managed entity.
         val savedTeam = teamRepository.save(teamToSave)
 
         return savedTeam
@@ -63,6 +65,9 @@ class TeamService(
             .map { (_, playerList) ->
                 if (playerList.size > 1) {
                     val firstPlayer = playerList.first()
+                    val ratings = playerList.mapNotNull { it.rating }.filter { it > 0 }
+                    val averageRating = if (ratings.isNotEmpty()) ratings.average() else 0.0
+
                     val mergedPlayer = Player(
                         id = firstPlayer.id,
                         name = firstPlayer.name,
@@ -73,7 +78,7 @@ class TeamService(
                         apps = playerList.sumOf { it.apps ?: 0 },
                         goals = playerList.sumOf { it.goals ?: 0 },
                         assists = playerList.sumOf { it.assists ?: 0 },
-                        rating = playerList.mapNotNull { it.rating }.average(),
+                        rating = averageRating,
                         minutes = playerList.sumOf { it.minutes ?: 0 },
                         yellowCards = playerList.sumOf { it.yellowCards ?: 0 },
                         redCards = playerList.sumOf { it.redCards ?: 0 },
@@ -134,11 +139,16 @@ class TeamService(
         val totalMinutes = players.sumOf { it.minutes ?: 0 }
         if (totalMinutes == 0) {
             // Fallback to simple average if no minutes data is available
-            return players.mapNotNull { it.rating }.average()
+            val ratings = players.mapNotNull { it.rating }.filter { it > 0 }
+            return if (ratings.isNotEmpty()) ratings.average() else 0.0
         }
 
         val weightedRatingSum = players.sumOf { (it.rating ?: 0.0) * (it.minutes ?: 0) }
 
         return weightedRatingSum / totalMinutes
+    }
+
+    override fun getTeamFromFootballDataApi(query: String): JSONObject? {
+        return footballDataApi.getTeam(query)
     }
 }

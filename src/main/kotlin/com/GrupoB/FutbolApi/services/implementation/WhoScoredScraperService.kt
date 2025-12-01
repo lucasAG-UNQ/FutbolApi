@@ -43,13 +43,15 @@ class WhoScoredScraperService(
             throw TeamNotFoundException("Team with id $teamID doesn't seems to exist")
         }
 
-        if (playersJSON.length() == 0) throw TeamNotFoundException("Team with id $teamID doesn't seems to exist")
-
+        if (playersJSON.length() == 0) {
+            val teamReq= client.newCall(buildRequest("${baseURL}/teams/$teamID")).execute()
+            val teamName = Jsoup.parse(teamReq.body?.string() ?: "").selectFirst("span.team-header-name")!!.text()
+            return TeamDTO(teamID, teamName, "", emptyList())
+        }
         val firstPlayer = playersJSON.getJSONObject(0) ?: throw TeamNotFoundException("Team with id $teamID doesn't seems to exist")
         val teamName = firstPlayer.getString("teamName")
         val teamCountry = firstPlayer.getString("teamRegionName")
         val teamIDFromJson = firstPlayer.getLong("teamId")
-
 
         val players = (0 until playersJSON.length()).map { i ->
             val p = playersJSON.getJSONObject(i)
@@ -69,7 +71,6 @@ class WhoScoredScraperService(
             val predCards = p.getDouble("redCard").toInt()
             val page = p.getDouble("age").toInt()
 
-
             PlayerDTO(
                 id = pid,
                 name = pname,
@@ -87,6 +88,7 @@ class WhoScoredScraperService(
                 age = page
             )
         }.toMutableList()
+
         return TeamDTO(
             teamIDFromJson, teamName, teamCountry, players
         )
@@ -185,7 +187,9 @@ class WhoScoredScraperService(
                 homeTeam = homeTeam,
                 awayTeam = awayTeam,
                 date = date,
-                tournament = arr.getString(22),//22 tournament code, 16 for the name of the tournament
+                homeScore = arr.optString(31, null)?.filter { it.isDigit() }?.toIntOrNull(),
+                awayScore = arr.optString(32, null)?.filter { it.isDigit() }?.toIntOrNull(),
+                tournament = arr.getString(16),//22 tournament code, 16 for the name of the tournament
             )
             fixtures.add(matchDto)
         }
@@ -200,4 +204,3 @@ class WhoScoredScraperService(
         .header("Accept-Language", "en-US,en;q=0.9")
         .build()
 }
-

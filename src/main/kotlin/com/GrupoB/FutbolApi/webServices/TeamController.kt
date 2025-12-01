@@ -2,7 +2,10 @@ package com.grupob.futbolapi.webServices
 
 import com.grupob.futbolapi.exceptions.TeamNotFoundException
 import com.grupob.futbolapi.model.dto.MatchDTO
+import com.grupob.futbolapi.services.IMatchService
+import com.grupob.futbolapi.model.dto.TeamComparisonDTO
 import com.grupob.futbolapi.model.dto.TeamDTO
+import com.grupob.futbolapi.model.dto.TeamStatsDTO
 import com.grupob.futbolapi.services.ITeamService
 import com.grupob.futbolapi.services.IWhoScoredScraperService
 import io.swagger.v3.oas.annotations.Operation
@@ -17,10 +20,9 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/teams")
 class TeamController(
     private val teamService: ITeamService,
-    private val scraperService: IWhoScoredScraperService
+    private val scraperService: IWhoScoredScraperService,
+    private val matchService: IMatchService
 ) {
-
-    private val logger = LoggerFactory.getLogger(TeamController::class.java)
 
     @GetMapping("/{teamID}")
     @Operation(summary = "Gets a team with its players by team ID")
@@ -39,8 +41,29 @@ class TeamController(
     @GetMapping("/{teamID}/nextMatches")
     @Operation(summary = "Gets the next matches for a team by team ID")
     fun getNextMatches(@PathVariable teamID: Long): ResponseEntity<List<MatchDTO>> {
-        val matches = scraperService.getNextTeamMatches(teamID)
+        val matches = matchService.getNextMatches(teamID)
         return ResponseEntity.ok(matches)
+    }
+
+    @GetMapping("/{teamID}/finishedMatches")
+    @Operation(summary = "Gets the finished matches for a team by team ID")
+    fun getFinishedMatches(@PathVariable teamID: Long): ResponseEntity<List<MatchDTO>> {
+        val matches = matchService.getFinishedMatches(teamID)
+        return ResponseEntity.ok(matches)
+    }
+
+    @GetMapping("/{teamID}/stats")
+    @Operation(summary = "Gets the statistics for a team by team ID")
+    fun getTeamStats(@PathVariable teamID: Long): ResponseEntity<TeamStatsDTO> {
+        val stats = matchService.getTeamStats(teamID)
+        return ResponseEntity.ok(stats)
+    }
+
+    @GetMapping("/compare/{teamAId}/{teamBId}")
+    @Operation(summary = "Compares the statistics of two teams")
+    fun compareTeams(@PathVariable teamAId: Long, @PathVariable teamBId: Long): ResponseEntity<TeamComparisonDTO> {
+        val comparison = matchService.compareTeams(teamAId, teamBId)
+        return ResponseEntity.ok(comparison)
     }
 
     @GetMapping("/search/{searchParam}")
@@ -61,6 +84,17 @@ class TeamController(
             ResponseEntity.ok().body(teamService.predictMatch(teamA,teamB))
         } catch (e : TeamNotFoundException){
             ResponseEntity.status(404).body(e.message)
+        }
+    }
+
+    @GetMapping("/football-data/{teamName}")
+    @Operation(summary = "Gets a team from football-data.org by name")
+    fun getTeamFromFootballData(@PathVariable teamName: String): ResponseEntity<Any> {
+        val team = teamService.getTeamFromFootballDataApi(teamName)
+        return if (team != null) {
+            ResponseEntity.ok(team.toString())
+        } else {
+            ResponseEntity.status(404).body("Team not found")
         }
     }
 }

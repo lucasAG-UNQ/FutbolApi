@@ -18,5 +18,9 @@ class Match(
 
     var date: LocalDate,
 
-    var tournament: String?
+    var tournament: String?,
+
+    var homeScore: Int?,
+
+    var awayScore: Int?
 )

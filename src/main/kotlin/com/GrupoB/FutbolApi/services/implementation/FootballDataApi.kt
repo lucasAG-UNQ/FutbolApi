@@ -1,0 +1,91 @@
+package com.grupob.futbolapi.services.implementation
+
+import me.xdrop.fuzzywuzzy.FuzzySearch
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONArray
+import org.json.JSONObject
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+@Transactional
+@Service
+class FootballDataApi {
+
+    val client = OkHttpClient()
+    val BASE_URL = "https://api.football-data.org/v4"
+    val API_KEY = "583451ac26bf4f5bb4fbbf294bca370f"
+
+    fun getTeam(query : String) : JSONObject?{
+        var teamsCount = Int.MAX_VALUE
+        val threshold = 75
+
+        val maxOffset = 500
+
+        var bestTeam: JSONObject? = null
+        var bestScore = 0
+        var offset = 0
+        while (teamsCount != 0) {
+
+            val (teams, count) = fetchTeamsPage(offset)
+            teamsCount = count
+
+            for (i in 0 until teams.length()) {
+                val team = teams.getJSONObject(i)
+                val name = team.getString("name")
+
+                val score = similarity(query, name)
+
+                // Track best result so far
+                if (score > bestScore) {
+                    bestScore = score
+                    bestTeam = team
+                }
+
+                // EARLY STOP: found good enough match
+                if (bestScore >= threshold) {
+                    return bestTeam
+                }
+            }
+
+            offset+=500
+        }
+
+        // Return best found only if above threshold, if the func gets off the loop, there is no team match
+        return null
+    }
+
+    fun getTeamById(teamId: Long): JSONObject? {
+        val request = Request.Builder()
+            .url("$BASE_URL/teams/$teamId")
+            .addHeader("X-Auth-Token", API_KEY)
+            .build()
+
+        val response = client.newCall(request).execute()
+        if (!response.isSuccessful) {
+            return null
+        }
+        val body = response.body?.string() ?: return null
+        return JSONObject(body)
+    }
+
+    fun similarity(a: String, b: String): Int {
+        return FuzzySearch.ratio(a.lowercase(), b.lowercase())
+    }
+
+    fun fetchTeamsPage(offset: Int): Pair<JSONArray, Int> {
+        val request = Request.Builder()
+            .url("$BASE_URL/teams?limit=500&offset=$offset")
+            .addHeader("X-Auth-Token", API_KEY)
+            .build()
+
+        val response = client.newCall(request).execute()
+        val body = response.body?.string() ?: throw Exception("Empty body")
+
+        val json = JSONObject(body)
+        val teams = json.getJSONArray("teams")
+        val teamsCount = json.getInt("count")
+
+        return teams to teamsCount
+    }
+}
