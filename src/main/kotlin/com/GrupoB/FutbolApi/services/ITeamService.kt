@@ -5,8 +5,8 @@ import com.grupob.futbolapi.model.dto.PredictionDTO
 import org.json.JSONObject
 
 interface ITeamService {
-    fun getTeamWithPlayers(teamName: String): Team?
-    fun getTeamWithPlayers(teamId: Long): Team?
+    fun getTeamWithPlayers(teamName: String): Team
+    fun getTeamWithPlayers(teamId: Long): Team
     fun predictMatch(teamA: Long, teamB: Long): PredictionDTO
     fun getTeamFromFootballDataApi(query: String): JSONObject?
 }

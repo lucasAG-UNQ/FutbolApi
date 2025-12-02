@@ -5,6 +5,7 @@ import com.grupob.futbolapi.services.implementation.WhoScoredScraperService
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.json.JSONException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -25,9 +26,7 @@ class WhoScoredScraperServiceTest {
     fun setUp() {
         server = MockWebServer()
         server.start()
-        val baseUrl = server.url("").toString().dropLast(1)
-        // We can now construct the service cleanly, without reflection.
-        // We pass a real OkHttpClient because the test hits a real (mock) server.
+        val baseUrl = server.url("/").toString().dropLast(1) // Use a slash for clarity
         scraperService = WhoScoredScraperService(OkHttpClient(), baseUrl)
     }
 
@@ -140,7 +139,7 @@ class WhoScoredScraperServiceTest {
             assertEquals(65, result[0].awayTeam.teamID)
             assertEquals("Barcelona", result[0].awayTeam.teamName)
             assertEquals(LocalDate.of(2025, 8, 16), result[0].date)
-            assertEquals("SLL", result[0].tournament)
+            assertEquals("LaLiga", result[0].tournament)
 
             // Assertions for the second match
             assertEquals(1913888, result[1].id)
@@ -149,7 +148,7 @@ class WhoScoredScraperServiceTest {
             assertEquals(65, result[1].awayTeam.teamID)
             assertEquals("Barcelona", result[1].awayTeam.teamName)
             assertEquals(LocalDate.of(2025, 8, 23), result[1].date)
-            assertEquals("SLL", result[1].tournament)
+            assertEquals("LaLiga", result[1].tournament)
         }
 
         @Test
@@ -311,14 +310,18 @@ class WhoScoredScraperServiceTest {
 
         @Test
         fun shouldThrowTeamNotFoundExceptionIfPlayerTableStatsIsEmpty() {
-            // Arrange
-            val mockJson = "{\"playerTableStats\": []}"
-            server.enqueue(MockResponse().setBody(mockJson))
+            // Arrange: Prepare the server for BOTH requests the service will make.
 
-            // Act & Assert
-            assertThrows(TeamNotFoundException::class.java) {
-                scraperService.getTeam(100L)
-            }
+            // 1. First response: An empty player stats array for the initial API call.
+            server.enqueue(MockResponse().setBody("{\"playerTableStats\": []}"))
+
+            // 2. Second response: An HTML page that does NOT contain the team name, for the fallback scrape.
+            server.enqueue(MockResponse().setBody("<html><body>Invalid Page</body></html>"))
+
+            // Act & Assert - Using AssertJ for a more fluent assertion
+            assertThatThrownBy { scraperService.getTeam(100L) }
+                .isInstanceOf(TeamNotFoundException::class.java)
+                .hasMessageContaining("Team with id 100 doesn't seems to exist")
         }
 
         @Test

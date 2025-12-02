@@ -2,9 +2,9 @@ package com.grupob.futbolapi.unit.webServices
 
 import com.grupob.futbolapi.model.Team
 import com.grupob.futbolapi.model.dto.MatchDTO
+import com.grupob.futbolapi.model.dto.PredictionDTO
 import com.grupob.futbolapi.model.dto.SimpleTeamDTO
-import com.grupob.futbolapi.repositories.RequestRepository
-import com.grupob.futbolapi.repositories.UserRepository
+import com.grupob.futbolapi.services.IMatchService
 import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
 import com.grupob.futbolapi.unit.model.builder.TeamBuilder
 import com.grupob.futbolapi.services.ITeamService
@@ -39,10 +39,7 @@ class TeamControllerTest {
     private lateinit var scraperService: IWhoScoredScraperService
 
     @Mock
-    private lateinit var userRepository: UserRepository
-
-    @Mock
-    private lateinit var requestRepository: RequestRepository
+    private lateinit var matchService: IMatchService
 
     @InjectMocks
     private lateinit var teamController: TeamController
@@ -69,10 +66,8 @@ class TeamControllerTest {
 
         @Test
         fun shouldReturn200OKWithTeamDataWhenTeamIsFound() {
-            // Arrange
             `when`(teamService.getTeamWithPlayers(teamId)).thenReturn(team)
 
-            // Act & Assert
             mockMvc.perform(get("$teamEndpoint/{teamID}", teamId))
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -83,10 +78,8 @@ class TeamControllerTest {
 
         @Test
         fun shouldReturn404NotFoundWhenTeamIsNotFound() {
-            // Arrange
-            `when`(teamService.getTeamWithPlayers(teamId)).thenReturn(null)
+            `when`(teamService.getTeamWithPlayers(teamId)).thenThrow(com.grupob.futbolapi.exceptions.TeamNotFoundException("Team not found"))
 
-            // Act & Assert
             mockMvc.perform(get("$teamEndpoint/{teamID}", teamId))
                 .andExpect(status().isNotFound)
         }
@@ -100,28 +93,24 @@ class TeamControllerTest {
 
         @Test
         fun shouldReturn200OKWithListOfMatches() {
-            // Arrange
             val matches = listOf(
-                MatchDTO(1, SimpleTeamDTO(10, "Team A"), SimpleTeamDTO(11, "Team B"), LocalDate.now(), "La Liga"),
-                MatchDTO(2, SimpleTeamDTO(12, "Team C"), SimpleTeamDTO(10, "Team A"), LocalDate.now().plusDays(7), "Copa del Rey")
+                MatchDTO(1, SimpleTeamDTO(10, "Team A"), SimpleTeamDTO(11, "Team B"), LocalDate.now(), "La Liga", 1, 0),
+                MatchDTO(2, SimpleTeamDTO(12, "Team C"), SimpleTeamDTO(10, "Team A"), LocalDate.now().plusDays(7), "Copa del Rey", 0, 0)
             )
-            `when`(scraperService.getNextTeamMatches(teamId)).thenReturn(matches)
+            `when`(matchService.getNextMatches(teamId)).thenReturn(matches)
 
-            // Act & Assert
             mockMvc.perform(get("$teamEndpoint/{teamID}/nextMatches", teamId))
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.size()").value(2))
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[1].tournament").value("Copa del Rey"))
+                .andExpect(jsonPath("$.size()").value(2))
         }
 
         @Test
         fun shouldReturn200OKWithEmptyListWhenNoMatchesAreFound() {
-            // Arrange
-            `when`(scraperService.getNextTeamMatches(teamId)).thenReturn(emptyList())
+            `when`(matchService.getNextMatches(teamId)).thenReturn(emptyList())
 
-            // Act & Assert
             mockMvc.perform(get("$teamEndpoint/{teamID}/nextMatches", teamId))
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -137,14 +126,12 @@ class TeamControllerTest {
 
         @Test
         fun shouldReturn200OKWithListOfTeamsWhenSearchIsSuccessful() {
-            // Arrange
             val teams = listOf(
                 SimpleTeamDTO(10, "Real Madrid"),
                 SimpleTeamDTO(15, "Atletico Madrid")
             )
             `when`(scraperService.searchTeams(searchParam)).thenReturn(teams)
 
-            // Act & Assert
             mockMvc.perform(get("$teamEndpoint/search/{searchParam}", searchParam))
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -155,12 +142,33 @@ class TeamControllerTest {
 
         @Test
         fun shouldReturn404NotFoundWhenSearchReturnsNoTeams() {
-            // Arrange
             `when`(scraperService.searchTeams(searchParam)).thenReturn(emptyList())
 
-            // Act & Assert
             mockMvc.perform(get("$teamEndpoint/search/{searchParam}", searchParam))
                 .andExpect(status().isNotFound)
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/teams/predict/{teamA}/{teamB}")
+    inner class PredictMatch {
+
+        private val teamAId = 1L
+        private val teamBId = 2L
+
+        @Test
+        fun shouldReturn200OKWithPrediction() {
+            val teamA = SimpleTeamDTO(teamAId, "Team A")
+            val teamB = SimpleTeamDTO(teamBId, "Team B")
+            val prediction = PredictionDTO(teamA, teamB, 0.5, 0.3, 0.2, teamA)
+            `when`(teamService.predictMatch(teamAId, teamBId)).thenReturn(prediction)
+
+            mockMvc.perform(get("$teamEndpoint/predict/{teamA}/{teamB}", teamAId, teamBId))
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.homeTeam.teamName").value("Team A"))
+                .andExpect(jsonPath("$.awayTeam.teamName").value("Team B"))
+                .andExpect(jsonPath("$.predictedWinner.teamName").value("Team A"))
         }
     }
 }

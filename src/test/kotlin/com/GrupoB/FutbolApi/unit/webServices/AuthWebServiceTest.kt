@@ -2,12 +2,13 @@ package com.grupob.futbolapi.unit.webServices
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.grupob.futbolapi.model.User
+import com.grupob.futbolapi.model.dto.LoginRequest
+import com.grupob.futbolapi.model.dto.LoginResponse
+import com.grupob.futbolapi.model.dto.RegisterRequest
 import com.grupob.futbolapi.repositories.RequestRepository
 import com.grupob.futbolapi.repositories.UserRepository
 import com.grupob.futbolapi.security.JwtTokenProvider
 import com.grupob.futbolapi.webServices.AuthWebService
-import com.grupob.futbolapi.webServices.LoginRequest
-import com.grupob.futbolapi.webServices.RegisterRequest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -30,7 +31,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import org.springframework.web.bind.annotation.ControllerAdvice
+import org.springframework.web.method.HandlerMethod
+import org.springframework.web.method.annotation.ExceptionHandlerMethodResolver
+import org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver
+import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod
 
 @ExtendWith(MockitoExtension::class)
 @DisplayName("AuthWebService Unit Tests")
@@ -59,14 +63,21 @@ class AuthWebServiceTest {
 
     @BeforeEach
     fun setUp() {
-        // For standaloneSetup, we need to add an exception handler
-        // to translate the AuthenticationException into a 401 status code,
-        // mimicking how Spring Security works in a full context.
+        // Create a dedicated exception handler for BadCredentialsException
+        val exceptionHandler = object {
+            @org.springframework.web.bind.annotation.ExceptionHandler(BadCredentialsException::class)
+            fun handleAuthException(e: Exception): org.springframework.http.ResponseEntity<Unit> {
+                return org.springframework.http.ResponseEntity.status(401).build()
+            }
+        }
+
+        // Create a resolver that knows how to use our exception handler
+        val resolver = ExceptionHandlerExceptionResolver()
+        resolver.afterPropertiesSet() // Manually initialize it
+
         mockMvc = MockMvcBuilders.standaloneSetup(authWebService)
-            .setControllerAdvice(object : Any() {
-                @org.springframework.web.bind.annotation.ExceptionHandler(BadCredentialsException::class)
-                fun handleAuthException(e: Exception) = org.springframework.http.ResponseEntity.status(401).build<Unit>()
-            }).build()
+            .setHandlerExceptionResolvers(resolver) // Register the resolver
+            .build()
     }
 
     @Nested
@@ -75,13 +86,11 @@ class AuthWebServiceTest {
 
         @Test
         fun shouldReturn200OKWhenRegistrationIsSuccessful() {
-            // Arrange
             val registerRequest = RegisterRequest("newUser", "password123")
             `when`(userRepository.findByUsername(registerRequest.username)).thenReturn(null)
             `when`(passwordEncoder.encode(registerRequest.password)).thenReturn("encodedPassword")
             `when`(userRepository.save(any(User::class.java))).thenReturn(User(1L, registerRequest.username, "encodedPassword"))
 
-            // Act & Assert
             mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registerRequest)))
@@ -91,11 +100,9 @@ class AuthWebServiceTest {
 
         @Test
         fun shouldReturn400BadRequestWhenUsernameIsAlreadyTaken() {
-            // Arrange
             val registerRequest = RegisterRequest("existingUser", "password123")
             `when`(userRepository.findByUsername(registerRequest.username)).thenReturn(User(1L, registerRequest.username, "anypass"))
 
-            // Act & Assert
             mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registerRequest)))
@@ -110,7 +117,6 @@ class AuthWebServiceTest {
 
         @Test
         fun shouldReturn200OKWithJwtWhenLoginIsSuccessful() {
-            // Arrange
             val loginRequest = LoginRequest("testuser", "password")
             val authentication: Authentication = UsernamePasswordAuthenticationToken(loginRequest.username, loginRequest.password)
             val jwt = "mock.jwt.token"
@@ -118,7 +124,6 @@ class AuthWebServiceTest {
             `when`(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken::class.java))).thenReturn(authentication)
             `when`(tokenProvider.generateToken(authentication)).thenReturn(jwt)
 
-            // Act & Assert
             mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))

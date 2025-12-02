@@ -1,5 +1,6 @@
 package com.grupob.futbolapi.services.implementation
 
+import com.grupob.futbolapi.services.IFootballDataApi
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -10,13 +11,13 @@ import org.springframework.transaction.annotation.Transactional
 
 @Transactional
 @Service
-class FootballDataApi {
+class FootballDataApi : IFootballDataApi {
 
     val client = OkHttpClient()
     val BASE_URL = "https://api.football-data.org/v4"
     val API_KEY = "583451ac26bf4f5bb4fbbf294bca370f"
 
-    fun getTeam(query : String) : JSONObject?{
+    override fun getTeam(query : String) : JSONObject?{
         var teamsCount = Int.MAX_VALUE
         val threshold = 75
 

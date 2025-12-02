@@ -11,6 +11,7 @@ import com.grupob.futbolapi.services.IWhoScoredScraperService
 import io.swagger.v3.oas.annotations.Operation
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -24,18 +25,17 @@ class TeamController(
     private val matchService: IMatchService
 ) {
 
+    @ExceptionHandler(TeamNotFoundException::class)
+    fun handleTeamNotFoundException(e: TeamNotFoundException): ResponseEntity<String> {
+        return ResponseEntity.status(404).body(e.message)
+    }
+
     @GetMapping("/{teamID}")
     @Operation(summary = "Gets a team with its players by team ID")
     fun getTeamWithPlayers(@PathVariable teamID: Long): ResponseEntity<Any> {
-
         val team = teamService.getTeamWithPlayers(teamID)
-
-        return if (team != null) {
-            val teamDTO = TeamDTO.fromModel(team)
-            ResponseEntity.ok(teamDTO)
-        } else {
-            ResponseEntity.status(404).body("Team not found")
-        }
+        val teamDTO = TeamDTO.fromModel(team)
+        return ResponseEntity.ok(teamDTO)
     }
 
     @GetMapping("/{teamID}/nextMatches")
@@ -80,11 +80,7 @@ class TeamController(
     @GetMapping("/predict/{teamA}/{teamB}")
     @Operation(summary = "Predicts the winner of a match between two teams")
     fun predictMatch(@PathVariable teamA: Long, @PathVariable teamB: Long): ResponseEntity<Any>{
-        return try {
-            ResponseEntity.ok().body(teamService.predictMatch(teamA,teamB))
-        } catch (e : TeamNotFoundException){
-            ResponseEntity.status(404).body(e.message)
-        }
+        return ResponseEntity.ok().body(teamService.predictMatch(teamA,teamB))
     }
 
     @GetMapping("/football-data/{teamName}")

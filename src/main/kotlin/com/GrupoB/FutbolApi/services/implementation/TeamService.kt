@@ -1,12 +1,12 @@
 package com.grupob.futbolapi.services.implementation
 
-import com.grupob.futbolapi.services.implementation.FootballDataApi
 import com.grupob.futbolapi.exceptions.TeamNotFoundException
 import com.grupob.futbolapi.model.Player
 import com.grupob.futbolapi.model.Team
 import com.grupob.futbolapi.model.dto.PredictionDTO
 import com.grupob.futbolapi.model.dto.SimpleTeamDTO
 import com.grupob.futbolapi.repositories.TeamRepository
+import com.grupob.futbolapi.services.IFootballDataApi
 import com.grupob.futbolapi.services.IPlayerService
 import com.grupob.futbolapi.services.ITeamService
 import com.grupob.futbolapi.services.IWhoScoredScraperService
@@ -14,26 +14,27 @@ import org.json.JSONObject
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.util.Calendar
 import kotlin.math.exp
 import kotlin.math.pow
 
-@Transactional
+@Transactional(noRollbackFor = [TeamNotFoundException::class])
 @Service
 class TeamService(
     private val teamRepository: TeamRepository,
     private val scraperService: IWhoScoredScraperService,
     private val playerService: IPlayerService,
-    private val footballDataApi: FootballDataApi
+    private val footballDataApi: IFootballDataApi
 ) : ITeamService {
 
-    override fun getTeamWithPlayers(teamName: String): Team? {
+    override fun getTeamWithPlayers(teamName: String): Team {
         val team = teamRepository.findByNameWithPlayers(teamName)
-        team?.players = mergePlayerStats(team?.players ?: mutableListOf())
+            ?: throw TeamNotFoundException("Team with name $teamName not found")
+        team.players = mergePlayerStats(team.players)
         return team
     }
 
-    override fun getTeamWithPlayers(teamId: Long): Team? {
+    @Transactional(noRollbackFor = [TeamNotFoundException::class])
+    override fun getTeamWithPlayers(teamId: Long): Team {
         val existingTeam = teamRepository.findByIdWithPlayers(teamId)
 
         if (existingTeam != null && existingTeam.lastUpdated.isAfter(LocalDateTime.now().minusDays(1))) {
@@ -44,7 +45,7 @@ class TeamService(
         val scrapedTeam = try {
             scraperService.getTeam(teamId)
         } catch (e: TeamNotFoundException) {
-            return null
+            throw TeamNotFoundException("Team with id $teamId not found")
         }
 
         val teamToSave = scrapedTeam.toModel()
@@ -92,10 +93,10 @@ class TeamService(
         return mergedPlayers.toMutableList()
     }
 
-    @Transactional
+
     override fun predictMatch(teamA: Long, teamB: Long): PredictionDTO {
-        val homeTeam:Team? = getTeamWithPlayers(teamA)
-        val awayTeam:Team? = getTeamWithPlayers(teamB)
+        val homeTeam = getTeamWithPlayers(teamA)
+        val awayTeam = getTeamWithPlayers(teamB)
 
         val strengthA = calculateTeamStrength(homeTeam)
         val strengthB = calculateTeamStrength(awayTeam)
@@ -115,14 +116,14 @@ class TeamService(
         val winProbabilityB = if (totalStrength > 0) remainingProbability * (strengthB / totalStrength) else 0.0
 
         val predictedWinner = when {
-            winProbabilityA > winProbabilityB -> SimpleTeamDTO.fromModel(homeTeam!!)
-            winProbabilityB > winProbabilityA -> SimpleTeamDTO.fromModel(awayTeam!!)
+            winProbabilityA > winProbabilityB -> SimpleTeamDTO.fromModel(homeTeam)
+            winProbabilityB > winProbabilityA -> SimpleTeamDTO.fromModel(awayTeam)
             else -> null // Indicates a predicted draw
         }
 
         return PredictionDTO(
-            homeTeam = SimpleTeamDTO.fromModel(homeTeam!!),
-            awayTeam = SimpleTeamDTO.fromModel(awayTeam!!),
+            homeTeam = SimpleTeamDTO.fromModel(homeTeam),
+            awayTeam = SimpleTeamDTO.fromModel(awayTeam),
             winProbabilityHomeTeam = winProbabilityA,
             winProbabilityAwayTeam = winProbabilityB,
             drawProbability = drawProbability,
@@ -130,8 +131,8 @@ class TeamService(
         )
     }
 
-    private fun calculateTeamStrength(team: Team?): Double {
-        val players = team!!.players
+    private fun calculateTeamStrength(team: Team): Double {
+        val players = team.players
         if (players.isNullOrEmpty()) {
             return 0.0
         }

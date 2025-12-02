@@ -35,7 +35,7 @@ class TeamControllerIntegrationTest {
         teamRepository.deleteAll()
 
         // Arrange: Save a team directly to the H2 database
-        val teamToSave = Team(name = "Integration Test Team", country = "Testland")
+        val teamToSave = Team(id = 1,name = "Integration Test Team", country = "Testland")
         savedTeam = teamRepository.save(teamToSave)
     }
 
@@ -56,7 +56,7 @@ class TeamControllerIntegrationTest {
     @WithMockUser // Also secure this test endpoint
     fun getShouldReturn404NotFoundForANonExistentTeamID() {
         // Arrange
-        val nonExistentId = 9999L
+        val nonExistentId = -1L
 
         // Act & Assert
         mockMvc.perform(get("/api/teams/{teamID}", nonExistentId))

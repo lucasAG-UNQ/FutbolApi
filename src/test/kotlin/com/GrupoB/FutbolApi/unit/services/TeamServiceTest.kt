@@ -1,5 +1,6 @@
 package com.grupob.futbolapi.unit.services
 
+import com.grupob.futbolapi.services.IFootballDataApi
 import com.grupob.futbolapi.exceptions.TeamNotFoundException
 import com.grupob.futbolapi.model.Team
 import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
@@ -23,6 +24,7 @@ import org.mockito.Mockito.never
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 import org.mockito.junit.jupiter.MockitoExtension
+import java.time.LocalDateTime
 
 @ExtendWith(MockitoExtension::class)
 @DisplayName("TeamService Unit Tests")
@@ -36,6 +38,9 @@ class TeamServiceTest {
 
     @Mock
     private lateinit var playerService: IPlayerService
+
+    @Mock
+    private lateinit var footballDataApi: IFootballDataApi
 
     @InjectMocks
     private lateinit var teamService: TeamService
@@ -64,22 +69,21 @@ class TeamServiceTest {
 
             // Assert
             assertEquals(expectedTeam, actualTeam)
-            assertEquals(1, actualTeam?.players?.size)
-            assertEquals("Jude Bellingham", actualTeam?.players?.get(0)?.name)
+            assertEquals(1, actualTeam.players.size)
+            assertEquals("Jude Bellingham", actualTeam.players[0].name)
 
             verify(teamRepository).findByNameWithPlayers(teamName)
         }
 
         @Test
-        fun itShouldReturnNullWhenTheTeamIsNotFoundByTheRepository() {
+        fun itShouldThrowTeamNotFoundExceptionWhenTheTeamIsNotFoundByTheRepository() {
             // Arrange
             `when`(teamRepository.findByNameWithPlayers(teamName)).thenReturn(null)
 
-            // Act
-            val actualTeam = teamService.getTeamWithPlayers(teamName)
-
-            // Assert
-            assertNull(actualTeam)
+            // Act & Assert
+            assertThrows<TeamNotFoundException> {
+                teamService.getTeamWithPlayers(teamName)
+            }
 
             verify(teamRepository).findByNameWithPlayers(teamName)
         }
@@ -94,11 +98,11 @@ class TeamServiceTest {
 
         @BeforeEach
         fun setUp() {
-            team = TeamBuilder().withId(teamId).withName("Cached Team").build()
+            team = TeamBuilder().withId(teamId).withName("Cached Team").withLastUpdated(LocalDateTime.now()).build()
         }
 
         @Test
-        fun itShouldReturnTheTeamFromTheRepositoryIfItExists() {
+        fun itShouldReturnTheTeamFromTheRepositoryIfItExistsAndIsRecent() {
             // Arrange
             `when`(teamRepository.findByIdWithPlayers(teamId)).thenReturn(team)
 
@@ -119,13 +123,15 @@ class TeamServiceTest {
             val scrapedTeamDto = TeamDTOBuilder().withId(teamId).withName("Scraped Team").build()
             `when`(teamRepository.findByIdWithPlayers(teamId)).thenReturn(null)
             `when`(scraperService.getTeam(teamId)).thenReturn(scrapedTeamDto)
+            `when`(teamRepository.save(org.mockito.ArgumentMatchers.any(Team::class.java))).thenAnswer { it.arguments[0] }
+
 
             // Act
             val actualTeam = teamService.getTeamWithPlayers(teamId)
 
             // Assert
-            assertEquals(scrapedTeamDto.id, actualTeam?.id)
-            assertEquals(scrapedTeamDto.name, actualTeam?.name)
+            assertEquals(scrapedTeamDto.id, actualTeam.id)
+            assertEquals(scrapedTeamDto.name, actualTeam.name)
 
             // Verify both repository and scraper were called
             verify(teamRepository).findByIdWithPlayers(teamId)
@@ -133,17 +139,15 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldReturnNullIfTheScraperFails() {
+        fun itShouldThrowTeamNotFoundExceptionIfTheScraperFails() {
             // Arrange
-            val scraperException = TeamNotFoundException("Team with id $teamId doesn't seem to exist")
             `when`(teamRepository.findByIdWithPlayers(teamId)).thenReturn(null)
-            `when`(scraperService.getTeam(teamId)).thenThrow(scraperException)
+            `when`(scraperService.getTeam(teamId)).thenThrow(TeamNotFoundException::class.java)
 
-            // Act
-            val actualTeam = teamService.getTeamWithPlayers(teamId)
-
-            // Assert
-            assertNull(actualTeam)
+            // Act & Assert
+            assertThrows<TeamNotFoundException> {
+                teamService.getTeamWithPlayers(teamId)
+            }
 
             // Verify both repository and scraper were called
             verify(teamRepository).findByIdWithPlayers(teamId)
@@ -160,12 +164,12 @@ class TeamServiceTest {
 
         @BeforeEach
         fun setUp() {
-            val playerA1 = PlayerBuilder().withRating(8.0).build()
-            val playerA2 = PlayerBuilder().withRating(9.0).build() // Avg: 8.5
+            val playerA1 = PlayerBuilder().withRating(8.0).withMinutes(90).build()
+            val playerA2 = PlayerBuilder().withRating(9.0).withMinutes(90).build() // Avg: 8.5
             teamA = TeamBuilder().withId(1L).withName("Team A").withPlayers(listOf(playerA1, playerA2)).build()
 
-            val playerB1 = PlayerBuilder().withRating(7.0).build()
-            val playerB2 = PlayerBuilder().withRating(8.0).build() // Avg: 7.5
+            val playerB1 = PlayerBuilder().withRating(7.0).withMinutes(90).build()
+            val playerB2 = PlayerBuilder().withRating(8.0).withMinutes(90).build() // Avg: 7.5
             teamB = TeamBuilder().withId(2L).withName("Team B").withPlayers(listOf(playerB1, playerB2)).build()
         }
 
@@ -176,10 +180,11 @@ class TeamServiceTest {
             `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(teamB)
 
             // Act
-            val winner = teamService.predictMatch(1L, 2L)
+            val prediction = teamService.predictMatch(1L, 2L)
 
             // Assert
-            assertEquals(teamA, winner)
+            assertEquals(teamA.id, prediction.predictedWinner?.teamID)
+            assertEquals(teamA.name, prediction.predictedWinner?.teamName)
         }
 
         @Test
@@ -190,26 +195,26 @@ class TeamServiceTest {
             `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(teamA)
 
             // Act
-            val winner = teamService.predictMatch(1L, 2L)
+            val prediction = teamService.predictMatch(1L, 2L)
 
             // Assert
-            assertEquals(teamA, winner) // The service returns the second team if their rating is higher
+            assertEquals(teamA.id, prediction.predictedWinner?.teamID)
         }
 
         @Test
         fun itShouldPredictTeamAHomeTeamToWinInADraw() {
             // Arrange
-            val playerB3 = PlayerBuilder().withRating(10.0).build() // Make B's avg 8.5 too
+            val playerB3 = PlayerBuilder().withRating(10.0).withMinutes(90).build() // Make B's avg 8.5 too
             teamB.players.add(playerB3)
 
             `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamA)
             `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(teamB)
 
             // Act
-            val winner = teamService.predictMatch(1L, 2L)
+            val prediction = teamService.predictMatch(1L, 2L)
 
             // Assert
-            assertEquals(teamA, winner)
+            assertEquals(teamA.id, prediction.predictedWinner?.teamID)
         }
 
         @Test
@@ -228,6 +233,8 @@ class TeamServiceTest {
             // Arrange
             `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamA)
             `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(null)
+            `when`(scraperService.getTeam(2L)).thenThrow(TeamNotFoundException::class.java)
+
 
             // Act & Assert
             assertThrows<TeamNotFoundException> {
@@ -243,11 +250,11 @@ class TeamServiceTest {
             `when`(teamRepository.findByIdWithPlayers(3L)).thenReturn(teamWithNoPlayers)
 
             // Act
-            val winner = teamService.predictMatch(1L, 3L)
+            val prediction = teamService.predictMatch(1L, 3L)
 
             // Assert
-            assertEquals(teamA.id, winner?.id, "Team with players should win against team with no players")
-            assertEquals(teamA.name, winner?.name, "Team with players should win against team with no players")
+            assertEquals(teamA.id, prediction.predictedWinner?.teamID, "Team with players should win against team with no players")
+            assertEquals(teamA.name, prediction.predictedWinner?.teamName, "Team with players should win against team with no players")
         }
     }
 }

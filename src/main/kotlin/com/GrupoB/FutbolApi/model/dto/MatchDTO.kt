@@ -3,7 +3,7 @@ package com.grupob.futbolapi.model.dto
 import com.grupob.futbolapi.model.Match
 import java.time.LocalDate
 
-class MatchDTO(
+data class MatchDTO(
     val id:Long?,
     val homeTeam: SimpleTeamDTO,
     val awayTeam: SimpleTeamDTO,

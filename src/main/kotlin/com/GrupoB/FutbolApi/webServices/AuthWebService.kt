@@ -1,6 +1,9 @@
 package com.grupob.futbolapi.webServices
 
 import com.grupob.futbolapi.model.User
+import com.grupob.futbolapi.model.dto.LoginRequest
+import com.grupob.futbolapi.model.dto.LoginResponse
+import com.grupob.futbolapi.model.dto.RegisterRequest
 import com.grupob.futbolapi.model.dto.RequestDTO
 import com.grupob.futbolapi.repositories.RequestRepository
 import com.grupob.futbolapi.repositories.UserRepository
@@ -12,10 +15,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.*
-
-data class LoginRequest(val username: String, val password: String)
-data class LoginResponse(val token: String)
-data class RegisterRequest(val username: String, val password: String)
 
 @RestController
 @RequestMapping("/api/auth")

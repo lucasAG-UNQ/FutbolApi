@@ -6,4 +6,5 @@ interface IPlayerService {
     fun save(player: Player): Player
     fun saveAll(players: List<Player>): List<Player>
     fun findByPlayerId(playerId: Long): Player?
+    fun savePlayer(player: Player): Player
 }

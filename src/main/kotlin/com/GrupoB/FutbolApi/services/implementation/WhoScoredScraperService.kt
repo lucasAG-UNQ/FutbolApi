@@ -1,6 +1,8 @@
 package com.grupob.futbolapi.services.implementation
 
+import com.grupob.futbolapi.exceptions.PlayerNotFoundException
 import com.grupob.futbolapi.exceptions.TeamNotFoundException
+import com.grupob.futbolapi.model.Player
 import com.grupob.futbolapi.model.dto.MatchDTO
 import com.grupob.futbolapi.model.dto.PlayerDTO
 import com.grupob.futbolapi.model.dto.SimpleTeamDTO
@@ -18,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-@Transactional
+@Transactional(noRollbackFor = [TeamNotFoundException::class])
 @Service
 class WhoScoredScraperService(
     private val client: OkHttpClient,
@@ -27,7 +29,6 @@ class WhoScoredScraperService(
 
     private val logger = LoggerFactory.getLogger(WhoScoredScraperService::class.java)
 
-    @Transactional
     override fun getTeam(teamID: Long): TeamDTO {
         val url = "$baseURL/statisticsfeed/1/getplayerstatistics?category=summary&subcategory=all&statsAccumulationType=0&isCurrent=true&teamIds=$teamID&sortBy=Rating&sortAscending=&field=Overall&isMinApp=false&includeZeroValues=true"
 
@@ -45,8 +46,9 @@ class WhoScoredScraperService(
 
         if (playersJSON.length() == 0) {
             val teamReq= client.newCall(buildRequest("${baseURL}/teams/$teamID")).execute()
-            val teamName = Jsoup.parse(teamReq.body?.string() ?: "").selectFirst("span.team-header-name")!!.text()
-            return TeamDTO(teamID, teamName, "", emptyList())
+            val teamName = Jsoup.parse(teamReq.body?.string() ?: "").selectFirst("span.team-header-name")
+            if (teamName == null) throw TeamNotFoundException("Team with id $teamID doesn't seems to exist")
+            return TeamDTO(teamID, teamName.text(), "", emptyList())
         }
         val firstPlayer = playersJSON.getJSONObject(0) ?: throw TeamNotFoundException("Team with id $teamID doesn't seems to exist")
         val teamName = firstPlayer.getString("teamName")
@@ -62,14 +64,14 @@ class WhoScoredScraperService(
             val pteam = SimpleTeamDTO(teamIDFromJson,teamName)
             val ptournament = p.optString("tournamentName",null)
             val pseason = p.optString("seasonName",null)
-            val papps = p.getDouble("apps").toInt()
-            val pgoals = p.getDouble("goal").toInt()
-            val passists = p.getDouble("assistTotal").toInt()
-            val prating = p.getDouble("rating")
-            val pminutes = p.getDouble("minsPlayed").toInt()
-            val pyellowCards = p.getDouble("yellowCard").toInt()
-            val predCards = p.getDouble("redCard").toInt()
-            val page = p.getDouble("age").toInt()
+            val papps = p.optInt("apps", 0)
+            val pgoals = p.optInt("goal", 0)
+            val passists = p.optInt("assistTotal", 0)
+            val prating = p.optDouble("rating", 0.0)
+            val pminutes = p.optInt("minsPlayed", 0)
+            val pyellowCards = p.optInt("yellowCard", 0)
+            val predCards = p.optInt("redCard", 0)
+            val page = p.optInt("age", 0)
 
             PlayerDTO(
                 id = pid,
@@ -161,6 +163,70 @@ class WhoScoredScraperService(
             return parseFixtures("[$arrayText]")
 
         }
+    }
+
+    override fun getPlayerById(playerId: Long): Player {
+        val url = "$baseURL/statisticsfeed/1/getplayerstatistics?category=summary&subcategory=all&statsAccumulationType=0&isCurrent=true&playerId=${playerId}&teamIds=&matchId=&stageId=&tournamentOptions=&sortBy=Rating&sortAscending=&age=&ageComparisonType=&appearances=&appearancesComparisonType=&field=Overall&nationality=&positionOptions=&timeOfTheGameEnd=&timeOfTheGameStart=&isMinApp=false&page=&includeZeroValues=true&numberOfPlayersToPick=&incPens="
+        val request = buildRequest(url)
+        val response = client.newCall(request).execute()
+        val body = response.body?.string()
+        if (body == null || !response.isSuccessful) {
+            throw PlayerNotFoundException("Player with id $playerId doesn't seem to exist")
+        }
+
+        val json = JSONObject(body)
+        val playerStats = json.getJSONArray("playerTableStats")
+
+        if (playerStats.length() == 0) {
+            throw PlayerNotFoundException("Player with id $playerId doesn't seem to exist")
+        }
+
+        val firstPlayer = playerStats.getJSONObject(0)
+        val name = firstPlayer.optString("name")
+        val position = firstPlayer.optString("positionText")
+        val age = firstPlayer.optInt("age")
+
+        var totalApps = 0
+        var totalMinutes = 0
+        var totalGoals = 0
+        var totalAssists = 0
+        var totalYellowCards = 0
+        var totalRedCards = 0
+        var weightedRatingSum = 0.0
+        val tournamentNames = mutableSetOf<String>()
+        val seasonNames = mutableSetOf<String>()
+
+        for (i in 0 until playerStats.length()) {
+            val p = playerStats.getJSONObject(i)
+            val minutes = p.optInt("minsPlayed")
+            totalApps += p.optInt("apps")
+            totalMinutes += minutes
+            totalGoals += p.optInt("goal")
+            totalAssists += p.optInt("assistTotal")
+            totalYellowCards += p.optInt("yellowCard")
+            totalRedCards += p.optInt("redCard")
+            weightedRatingSum += p.optDouble("rating") * minutes
+            tournamentNames.add(p.optString("tournamentName"))
+            seasonNames.add(p.optString("seasonName"))
+        }
+
+        val rating = if (totalMinutes > 0) weightedRatingSum / totalMinutes else 0.0
+
+        return Player(
+            id = playerId,
+            name = name,
+            position = position,
+            age = age,
+            apps = totalApps,
+            minutes = totalMinutes,
+            goals = totalGoals,
+            assists = totalAssists,
+            yellowCards = totalYellowCards,
+            redCards = totalRedCards,
+            rating = rating,
+            tournament = tournamentNames.joinToString(", "),
+            season = seasonNames.joinToString(", ")
+        )
     }
 
     private fun parseFixtures(rawJsonArray: String): List<MatchDTO> {

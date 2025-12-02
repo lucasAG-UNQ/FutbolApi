@@ -3,6 +3,7 @@ package com.grupob.futbolapi.unit.services
 import com.grupob.futbolapi.model.Player
 import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
 import com.grupob.futbolapi.repositories.PlayerRepository
+import com.grupob.futbolapi.services.IWhoScoredScraperService
 import com.grupob.futbolapi.services.implementation.PlayerService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -20,10 +21,13 @@ class PlayerServiceTest {
     @Mock
     private lateinit var playerRepository: PlayerRepository
 
-    @InjectMocks
-    private lateinit var playerService: PlayerService
+    @Mock
+    private lateinit var scraperService: IWhoScoredScraperService
 
     private lateinit var playersToSave: List<Player>
+
+    @InjectMocks
+    private lateinit var playerService: PlayerService
 
     @BeforeEach
     fun setUp() {

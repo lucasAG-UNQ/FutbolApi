@@ -2,9 +2,9 @@ package com.grupob.futbolapi.integration
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.grupob.futbolapi.model.User
+import com.grupob.futbolapi.model.dto.LoginRequest
+import com.grupob.futbolapi.model.dto.RegisterRequest
 import com.grupob.futbolapi.repositories.UserRepository
-import com.grupob.futbolapi.webServices.LoginRequest
-import com.grupob.futbolapi.webServices.RegisterRequest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
