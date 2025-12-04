@@ -44,20 +44,6 @@ class AuthWebServiceIntegrationTest {
     private lateinit var objectMapper: ObjectMapper
 
 
-    companion object {
-        @JvmStatic
-        @DynamicPropertySource
-        fun dynamicProperties(registry: DynamicPropertyRegistry) {
-            val apiKey = System.getenv("FOOTBALLDATAAPIKEY")
-            if (apiKey.isNullOrBlank()) {
-                // This fails the test early if the secret isn't configured in the environment,
-                // which is much clearer than a context load failure.
-                throw IllegalStateException("FOOTBALLDATAAPIKEY environment variable not set for integration tests")
-            }
-            registry.add("FOOTBALLDATAAPIKEY") { apiKey }
-        }
-    }
-
     @BeforeEach
     fun setUp() {
         userRepository.deleteAll()

@@ -46,25 +46,14 @@ configurations {
     }
 }
 
-tasks.withType<Test> {
+tasks.test {
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
-    the<org.gradle.testing.jacoco.plugins.JacocoTaskExtension>().apply {
-        isIncludeNoLocationClasses = true
-        excludes = listOf(
-            "**/integration/**",
-            "**/aspects/**",
-            "**/config/**",
-            "**/dto/**",
-            "**/security/**",
-            "**/FutbolApiApplication.kt"
-        )
-    }
 }
 
 tasks.jacocoTestReport {
     reports {
-        xml.required.set(true)
+        xml.required.set(true)   // XML is needed by SonarCloud
         html.required.set(true)
     }
     classDirectories.setFrom(files(classDirectories.files.map {
@@ -152,4 +141,8 @@ allOpen {
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.MappedSuperclass")
     annotation("jakarta.persistence.Embeddable")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
