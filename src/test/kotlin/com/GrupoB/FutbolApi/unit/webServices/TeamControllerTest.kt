@@ -1,14 +1,13 @@
 package com.grupob.futbolapi.unit.webServices
 
 import com.grupob.futbolapi.model.Team
-import com.grupob.futbolapi.model.dto.MatchDTO
-import com.grupob.futbolapi.model.dto.PredictionDTO
-import com.grupob.futbolapi.model.dto.SimpleTeamDTO
+import com.grupob.futbolapi.model.dto.*
 import com.grupob.futbolapi.services.IMatchService
 import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
 import com.grupob.futbolapi.unit.model.builder.TeamBuilder
 import com.grupob.futbolapi.services.ITeamService
 import com.grupob.futbolapi.services.IWhoScoredScraperService
+import com.grupob.futbolapi.unit.model.builder.TeamStatsDTOBuilder
 import com.grupob.futbolapi.webServices.TeamController
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -115,6 +114,69 @@ class TeamControllerTest {
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.size()").value(0))
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/teams/{teamID}/finishedMatches")
+    inner class GetFinishedMatches {
+
+        private val teamId = 10L
+
+        @Test
+        fun shouldReturn200OKWithListOfFinishedMatches() {
+            val matches = listOf(
+                MatchDTO(1, SimpleTeamDTO(10, "Team A"), SimpleTeamDTO(11, "Team B"), LocalDate.now().minusDays(1), "La Liga", 2, 1),
+                MatchDTO(2, SimpleTeamDTO(12, "Team C"), SimpleTeamDTO(10, "Team A"), LocalDate.now().minusDays(8), "Copa del Rey", 0, 3)
+            )
+            `when`(matchService.getFinishedMatches(teamId)).thenReturn(matches)
+
+            mockMvc.perform(get("$teamEndpoint/{teamID}/finishedMatches", teamId))
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.size()").value(2))
+                .andExpect(jsonPath("$[0].homeScore").value(2))
+                .andExpect(jsonPath("$[1].awayScore").value(3))
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/teams/{teamID}/stats")
+    inner class GetTeamStats {
+
+        private val teamId = 1L
+
+        @Test
+        fun shouldReturn200OKWithTeamStats() {
+            val teamStats = TeamStatsDTOBuilder().withTeamId(teamId).withTeamName("Test Team").build()
+            `when`(matchService.getTeamStats(teamId)).thenReturn(teamStats)
+
+            mockMvc.perform(get("$teamEndpoint/{teamID}/stats", teamId))
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.teamName").value("Test Team"))
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/teams/compare/{teamAId}/{teamBId}")
+    inner class CompareTeams {
+
+        private val teamAId = 1L
+        private val teamBId = 2L
+
+        @Test
+        fun shouldReturn200OKWithTeamComparison() {
+            val teamAStats = TeamStatsDTOBuilder().withTeamId(teamAId).withTeamName("Team A").build()
+            val teamBStats = TeamStatsDTOBuilder().withTeamId(teamBId).withTeamName("Team B").build()
+            val comparison = TeamComparisonDTO(teamAStats, teamBStats)
+            `when`(matchService.compareTeams(teamAId, teamBId)).thenReturn(comparison)
+
+            mockMvc.perform(get("$teamEndpoint/compare/{teamAId}/{teamBId}", teamAId, teamBId))
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.teamA.teamName").value("Team A"))
+                .andExpect(jsonPath("$.teamB.teamName").value("Team B"))
         }
     }
 

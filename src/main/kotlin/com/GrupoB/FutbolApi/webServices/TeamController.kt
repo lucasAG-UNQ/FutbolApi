@@ -82,15 +82,4 @@ class TeamController(
     fun predictMatch(@PathVariable teamA: Long, @PathVariable teamB: Long): ResponseEntity<Any>{
         return ResponseEntity.ok().body(teamService.predictMatch(teamA,teamB))
     }
-
-    @GetMapping("/football-data/{teamName}")
-    @Operation(summary = "Gets a team from football-data.org by name")
-    fun getTeamFromFootballData(@PathVariable teamName: String): ResponseEntity<Any> {
-        val team = teamService.getTeamFromFootballDataApi(teamName)
-        return if (team != null) {
-            ResponseEntity.ok(team.toString())
-        } else {
-            ResponseEntity.status(404).body("Team not found")
-        }
-    }
 }

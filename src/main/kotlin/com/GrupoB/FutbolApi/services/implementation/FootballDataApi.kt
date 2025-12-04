@@ -6,16 +6,17 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Transactional
 @Service
 class FootballDataApi : IFootballDataApi {
-
     val client = OkHttpClient()
-    val BASE_URL = "https://api.football-data.org/v4"
-    val API_KEY = "583451ac26bf4f5bb4fbbf294bca370f"
+    val baseUrl = "https://api.football-data.org/v4"
+    @Value("\${FOOTBALLDATAAPIKEY}")
+    private lateinit var apiKey: String
 
     override fun getTeam(query : String) : JSONObject?{
         var teamsCount = Int.MAX_VALUE
@@ -58,8 +59,8 @@ class FootballDataApi : IFootballDataApi {
 
     fun getTeamById(teamId: Long): JSONObject? {
         val request = Request.Builder()
-            .url("$BASE_URL/teams/$teamId")
-            .addHeader("X-Auth-Token", API_KEY)
+            .url("$baseUrl/teams/$teamId")
+            .addHeader("X-Auth-Token", apiKey)
             .build()
 
         val response = client.newCall(request).execute()
@@ -76,8 +77,8 @@ class FootballDataApi : IFootballDataApi {
 
     fun fetchTeamsPage(offset: Int): Pair<JSONArray, Int> {
         val request = Request.Builder()
-            .url("$BASE_URL/teams?limit=500&offset=$offset")
-            .addHeader("X-Auth-Token", API_KEY)
+            .url("$baseUrl/teams?limit=500&offset=$offset")
+            .addHeader("X-Auth-Token", apiKey)
             .build()
 
         val response = client.newCall(request).execute()

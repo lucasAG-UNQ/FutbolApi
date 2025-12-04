@@ -17,3 +17,8 @@ jobs:
           method: POST
           headers: |
             Authorization: Bearer ${{ secrets.RENDER_API_KEY }}
+      - name: Test with Gradle
+        run: ./gradlew test
+        env:
+          FOOTBALLDATAAPIKEY: ${{ secrets.FOOTBALLDATAAPIKEY }}
+

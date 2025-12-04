@@ -1,9 +1,9 @@
 package com.grupob.futbolapi.unit.webServices
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.grupob.futbolapi.model.Request
 import com.grupob.futbolapi.model.User
 import com.grupob.futbolapi.model.dto.LoginRequest
-import com.grupob.futbolapi.model.dto.LoginResponse
 import com.grupob.futbolapi.model.dto.RegisterRequest
 import com.grupob.futbolapi.repositories.RequestRepository
 import com.grupob.futbolapi.repositories.UserRepository
@@ -24,17 +24,16 @@ import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import org.springframework.web.method.HandlerMethod
 import org.springframework.web.method.annotation.ExceptionHandlerMethodResolver
 import org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver
-import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod
+import java.time.LocalDateTime
 
 @ExtendWith(MockitoExtension::class)
 @DisplayName("AuthWebService Unit Tests")
@@ -63,7 +62,6 @@ class AuthWebServiceTest {
 
     @BeforeEach
     fun setUp() {
-        // Create a dedicated exception handler for BadCredentialsException
         val exceptionHandler = object {
             @org.springframework.web.bind.annotation.ExceptionHandler(BadCredentialsException::class)
             fun handleAuthException(e: Exception): org.springframework.http.ResponseEntity<Unit> {
@@ -71,12 +69,11 @@ class AuthWebServiceTest {
             }
         }
 
-        // Create a resolver that knows how to use our exception handler
         val resolver = ExceptionHandlerExceptionResolver()
-        resolver.afterPropertiesSet() // Manually initialize it
+        resolver.afterPropertiesSet()
 
         mockMvc = MockMvcBuilders.standaloneSetup(authWebService)
-            .setHandlerExceptionResolvers(resolver) // Register the resolver
+            .setHandlerExceptionResolvers(resolver)
             .build()
     }
 
@@ -129,6 +126,44 @@ class AuthWebServiceTest {
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.token").value(jwt))
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/auth/history")
+    inner class GetRequestHistory {
+
+        @Test
+        fun shouldReturn200OKWithRequestHistoryForAuthenticatedUser() {
+            val user = User(1L, "testuser", "password")
+            val requests = listOf(
+                Request(1L, "/api/teams/1", LocalDateTime.now(), user),
+                Request(2L, "/api/teams/2", LocalDateTime.now(), user)
+            )
+            val authentication: Authentication = UsernamePasswordAuthenticationToken(user.username, null)
+            SecurityContextHolder.getContext().authentication = authentication
+
+            `when`(userRepository.findByUsername(user.username)).thenReturn(user)
+            `when`(requestRepository.findByUserId(user.id!!)).thenReturn(requests)
+
+            mockMvc.perform(get("/api/auth/history")
+                .principal(authentication))
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.size()").value(2))
+                .andExpect(jsonPath("$[0].endpoint").value("/api/teams/1"))
+        }
+
+        @Test
+        fun shouldReturn404NotFoundWhenUserIsNotFound() {
+            val authentication: Authentication = UsernamePasswordAuthenticationToken("nonexistentuser", null)
+            SecurityContextHolder.getContext().authentication = authentication
+
+            `when`(userRepository.findByUsername("nonexistentuser")).thenReturn(null)
+
+            mockMvc.perform(get("/api/auth/history")
+                .principal(authentication))
+                .andExpect(status().isNotFound)
         }
     }
 }

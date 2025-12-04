@@ -1,3 +1,3 @@
 package com.grupob.futbolapi.exceptions
 
-class PlayerNotFoundException(message: String) : Exception(message)
+class PlayerNotFoundException(message: String) : RuntimeException(message)

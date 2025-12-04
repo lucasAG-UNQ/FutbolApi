@@ -1,21 +1,23 @@
 package com.grupob.futbolapi.unit.services
 
+import com.grupob.futbolapi.exceptions.PlayerNotFoundException
 import com.grupob.futbolapi.model.Player
-import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
 import com.grupob.futbolapi.repositories.PlayerRepository
 import com.grupob.futbolapi.services.IWhoScoredScraperService
 import com.grupob.futbolapi.services.implementation.PlayerService
+import com.grupob.futbolapi.unit.model.builder.PlayerBuilder
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
-import org.mockito.Mockito.verify
+import org.mockito.Mockito.*
 import org.mockito.junit.jupiter.MockitoExtension
+import java.util.*
 
 @ExtendWith(MockitoExtension::class)
-@DisplayName("PlayerService Unit Tests")
 class PlayerServiceTest {
 
     @Mock
@@ -24,39 +26,46 @@ class PlayerServiceTest {
     @Mock
     private lateinit var scraperService: IWhoScoredScraperService
 
-    private lateinit var playersToSave: List<Player>
-
     @InjectMocks
     private lateinit var playerService: PlayerService
 
+    private val playerId = 1L
+    private lateinit var player: Player
+
     @BeforeEach
     fun setUp() {
-        val player1 = PlayerBuilder().withId(1L).withName("Player One").build()
-        val player2 = PlayerBuilder().withId(2L).withName("Player Two").build()
-        playersToSave = listOf(player1, player2)
+        player = PlayerBuilder().withId(playerId).withName("Test Player").build()
     }
 
     @Test
-    fun saveAllShouldCallTheRepositorysSaveAllMethodWithTheCorrectListOfPlayers() {
-        // Act
-        playerService.saveAll(playersToSave)
+    fun findByPlayerIdShouldReturnPlayerFromRepositoryIfItExists() {
+        `when`(playerRepository.findById(playerId)).thenReturn(Optional.of(player))
 
-        // Assert
-        // Verify that the repository's saveAll method was called exactly once
-        // with the same list of players that was passed to the service.
-        verify(playerRepository).saveAll(playersToSave)
+        val result = playerService.findByPlayerId(playerId)
+
+        assertEquals(player, result)
+        verify(scraperService, never()).getPlayerById(playerId)
     }
 
     @Test
-    fun saveAllShouldHandleAnEmptyListWithoutErrors() {
-        // Arrange
-        val emptyPlayerList = emptyList<Player>()
+    fun findByPlayerIdShouldScrapeAndSavePlayerIfNotInRepository() {
+        `when`(playerRepository.findById(playerId)).thenReturn(Optional.empty())
+        `when`(scraperService.getPlayerById(playerId)).thenReturn(player)
+        `when`(playerRepository.save(player)).thenReturn(player)
 
-        // Act
-        playerService.saveAll(emptyPlayerList)
+        val result = playerService.findByPlayerId(playerId)
 
-        // Assert
-        // Verify that the repository's saveAll method was still called with the empty list.
-        verify(playerRepository).saveAll(emptyPlayerList)
+        assertEquals(player, result)
+        verify(playerRepository).save(player)
+    }
+
+    @Test
+    fun findByPlayerIdShouldReturnNullIfPlayerIsNotInRepositoryAndScraperFails() {
+        `when`(playerRepository.findById(playerId)).thenReturn(Optional.empty())
+        `when`(scraperService.getPlayerById(playerId)).thenThrow(PlayerNotFoundException("Player not found"))
+
+        val result = playerService.findByPlayerId(playerId)
+
+        assertNull(result)
     }
 }

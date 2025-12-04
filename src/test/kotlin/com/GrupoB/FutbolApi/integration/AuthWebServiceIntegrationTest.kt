@@ -16,6 +16,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -40,6 +42,21 @@ class AuthWebServiceIntegrationTest {
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper
+
+
+    companion object {
+        @JvmStatic
+        @DynamicPropertySource
+        fun dynamicProperties(registry: DynamicPropertyRegistry) {
+            val apiKey = System.getenv("FOOTBALLDATAAPIKEY")
+            if (apiKey.isNullOrBlank()) {
+                // This fails the test early if the secret isn't configured in the environment,
+                // which is much clearer than a context load failure.
+                throw IllegalStateException("FOOTBALLDATAAPIKEY environment variable not set for integration tests")
+            }
+            registry.add("FOOTBALLDATAAPIKEY") { apiKey }
+        }
+    }
 
     @BeforeEach
     fun setUp() {

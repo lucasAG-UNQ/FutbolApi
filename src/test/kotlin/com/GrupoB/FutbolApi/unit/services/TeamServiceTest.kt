@@ -60,7 +60,7 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldReturnTheTeamWhenFoundByTheRepository() {
+        fun shouldReturnTheTeamWhenFoundByTheRepository() {
             // Arrange
             `when`(teamRepository.findByNameWithPlayers(teamName)).thenReturn(expectedTeam)
 
@@ -76,7 +76,7 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldThrowTeamNotFoundExceptionWhenTheTeamIsNotFoundByTheRepository() {
+        fun shouldThrowTeamNotFoundExceptionWhenTheTeamIsNotFoundByTheRepository() {
             // Arrange
             `when`(teamRepository.findByNameWithPlayers(teamName)).thenReturn(null)
 
@@ -102,7 +102,7 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldReturnTheTeamFromTheRepositoryIfItExistsAndIsRecent() {
+        fun shouldReturnTheTeamFromTheRepositoryIfItExistsAndIsRecent() {
             // Arrange
             `when`(teamRepository.findByIdWithPlayers(teamId)).thenReturn(team)
 
@@ -118,7 +118,7 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldCallTheScraperServiceIfTheTeamDoesNotExistInTheRepository() {
+        fun shouldCallTheScraperServiceIfTheTeamDoesNotExistInTheRepository() {
             // Arrange
             val scrapedTeamDto = TeamDTOBuilder().withId(teamId).withName("Scraped Team").build()
             `when`(teamRepository.findByIdWithPlayers(teamId)).thenReturn(null)
@@ -139,7 +139,7 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldThrowTeamNotFoundExceptionIfTheScraperFails() {
+        fun shouldThrowTeamNotFoundExceptionIfTheScraperFails() {
             // Arrange
             `when`(teamRepository.findByIdWithPlayers(teamId)).thenReturn(null)
             `when`(scraperService.getTeam(teamId)).thenThrow(TeamNotFoundException::class.java)
@@ -174,7 +174,7 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldPredictTeamAToWinWhenTheirAverageRatingIsHigher() {
+        fun shouldPredictTeamAToWinWhenTheirAverageRatingIsHigher() {
             // Arrange
             `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamA)
             `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(teamB)
@@ -188,7 +188,7 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldPredictTeamBToWinWhenTheirAverageRatingIsHigher() {
+        fun shouldPredictTeamBToWinWhenTheirAverageRatingIsHigher() {
             // Arrange
             // Swap the teams to make B the winner
             `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamB)
@@ -202,7 +202,7 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldPredictTeamAHomeTeamToWinInADraw() {
+        fun shouldPredictTeamAHomeTeamToWinInADraw() {
             // Arrange
             val playerB3 = PlayerBuilder().withRating(10.0).withMinutes(90).build() // Make B's avg 8.5 too
             teamB.players.add(playerB3)
@@ -218,7 +218,7 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldThrowTeamNotFoundExceptionIfTeamAIsNotFound() {
+        fun shouldThrowTeamNotFoundExceptionIfTeamAIsNotFound() {
             // Arrange
             `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(null)
             `when`(scraperService.getTeam(1L)).thenThrow(TeamNotFoundException::class.java)
@@ -229,7 +229,7 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldThrowTeamNotFoundExceptionIfTeamBIsNotFound() {
+        fun shouldThrowTeamNotFoundExceptionIfTeamBIsNotFound() {
             // Arrange
             `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamA)
             `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(null)
@@ -243,7 +243,7 @@ class TeamServiceTest {
         }
 
         @Test
-        fun itShouldHandleTeamsWithNoPlayers() {
+        fun shouldHandleTeamsWithNoPlayers() {
             // Arrange
             val teamWithNoPlayers = TeamBuilder().withId(3L).withName("No Players FC").withPlayers(emptyList()).build()
             `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamA)

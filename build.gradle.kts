@@ -37,6 +37,7 @@ ext {
     set("springdocVersion", "2.8.4")
     set("archunitVersion", "1.3.0")
     set("fuzzywuzzyVersion","1.4.0")
+    set("mockitoKotlinVersion", "5.2.1")
 }
 
 configurations {
@@ -45,16 +46,41 @@ configurations {
     }
 }
 
-tasks.test {
+tasks.withType<Test> {
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
+    the<org.gradle.testing.jacoco.plugins.JacocoTaskExtension>().apply {
+        isIncludeNoLocationClasses = true
+        excludes = listOf(
+            "**/integration/**",
+            "**/aspects/**",
+            "**/config/**",
+            "**/dto/**",
+            "**/security/**",
+            "**/FutbolApiApplication.kt"
+        )
+    }
 }
 
 tasks.jacocoTestReport {
     reports {
-        xml.required.set(true)   // XML is needed by SonarCloud
+        xml.required.set(true)
         html.required.set(true)
     }
+    classDirectories.setFrom(files(classDirectories.files.map {
+        fileTree(it) {
+            exclude(
+                "**/integration/**",
+                "**/aspects/**",
+                "**/config/**",
+                "**/dto/**",
+                "**/security/**",
+                "**/FutbolApiApplication.kt"
+            )
+        }
+    }))
+    sourceSets(sourceSets.main.get())
+    executionData.setFrom(fileTree(buildDir).include("**/jacoco/test.exec"))
 }
 
 repositories {
@@ -110,6 +136,7 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("com.squareup.okhttp3:mockwebserver:${project.extra["mockwebserverVersion"]}")
     testImplementation("com.tngtech.archunit:archunit-junit5:${project.extra["archunitVersion"]}")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:${project.extra["mockitoKotlinVersion"]}")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -125,8 +152,4 @@ allOpen {
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.MappedSuperclass")
     annotation("jakarta.persistence.Embeddable")
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
 }
