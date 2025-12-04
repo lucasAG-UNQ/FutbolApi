@@ -12,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional
 
 @Transactional
 @Service
-class FootballDataApi : IFootballDataApi {
-    val client = OkHttpClient()
+class FootballDataApi(private val client: OkHttpClient) : IFootballDataApi {
+
     val baseUrl = "https://api.football-data.org/v4"
     @Value("\${FOOTBALL_DATA_API_KEY}")
     private lateinit var apiKey: String

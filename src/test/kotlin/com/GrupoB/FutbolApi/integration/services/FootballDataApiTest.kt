@@ -1,6 +1,7 @@
 package com.grupob.futbolapi.integration.services
 
 import com.grupob.futbolapi.services.implementation.FootballDataApi
+import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterEach
@@ -22,7 +23,7 @@ class FootballDataApiTest {
     fun setUp() {
         server = MockWebServer()
         server.start()
-        footballDataApi = FootballDataApi()
+        footballDataApi = FootballDataApi(OkHttpClient())
         ReflectionTestUtils.setField(footballDataApi, "apiKey", "test-api-key")
     }
 

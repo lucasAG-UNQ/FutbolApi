@@ -185,6 +185,9 @@ class TeamServiceTest {
             // Assert
             assertEquals(teamA.id, prediction.predictedWinner?.teamID)
             assertEquals(teamA.name, prediction.predictedWinner?.teamName)
+            assertEquals(0.37, prediction.winProbabilityHomeTeam, 0.001)
+            assertEquals(0.32, prediction.winProbabilityAwayTeam, 0.001)
+            assertEquals(0.31, prediction.drawProbability, 0.001)
         }
 
         @Test
@@ -199,12 +202,15 @@ class TeamServiceTest {
 
             // Assert
             assertEquals(teamA.id, prediction.predictedWinner?.teamID)
+            assertEquals(0.32, prediction.winProbabilityHomeTeam, 0.001)
+            assertEquals(0.36, prediction.winProbabilityAwayTeam, 0.001)
+            assertEquals(0.32, prediction.drawProbability, 0.001)
         }
 
         @Test
         fun shouldPredictTeamAHomeTeamToWinInADraw() {
             // Arrange
-            val playerB3 = PlayerBuilder().withRating(10.0).withMinutes(90).build() // Make B's avg 8.5 too
+            val playerB3 = PlayerBuilder().withRating(9.5).withMinutes(90).build() // Adjust rating to make avg 8.5
             teamB.players.add(playerB3)
 
             `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamA)
@@ -215,6 +221,9 @@ class TeamServiceTest {
 
             // Assert
             assertEquals(teamA.id, prediction.predictedWinner?.teamID)
+            assertEquals(0.34, prediction.winProbabilityHomeTeam, 0.001)
+            assertEquals(0.32, prediction.winProbabilityAwayTeam, 0.001)
+            assertEquals(0.34, prediction.drawProbability, 0.001)
         }
 
         @Test
@@ -255,6 +264,54 @@ class TeamServiceTest {
             // Assert
             assertEquals(teamA.id, prediction.predictedWinner?.teamID, "Team with players should win against team with no players")
             assertEquals(teamA.name, prediction.predictedWinner?.teamName, "Team with players should win against team with no players")
+        }
+
+        @Test
+        fun shouldHandleTeamsWithPlayersButZeroMinutesPlayed() {
+            // Arrange
+            val playerA1 = PlayerBuilder().withRating(8.0).withMinutes(0).build()
+            val playerA2 = PlayerBuilder().withRating(9.0).withMinutes(0).build()
+            val teamAZeroMinutes = TeamBuilder().withId(1L).withName("Team A Zero Minutes").withPlayers(listOf(playerA1, playerA2)).build()
+
+            val playerB1 = PlayerBuilder().withRating(7.0).withMinutes(0).build()
+            val playerB2 = PlayerBuilder().withRating(8.0).withMinutes(0).build()
+            val teamBZeroMinutes = TeamBuilder().withId(2L).withName("Team B Zero Minutes").withPlayers(listOf(playerB1, playerB2)).build()
+
+            `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamAZeroMinutes)
+            `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(teamBZeroMinutes)
+
+            // Act
+            val prediction = teamService.predictMatch(1L, 2L)
+
+            // Assert
+            assertEquals(teamAZeroMinutes.id, prediction.predictedWinner?.teamID)
+            assertEquals(0.37, prediction.winProbabilityHomeTeam, 0.001)
+            assertEquals(0.32, prediction.winProbabilityAwayTeam, 0.001)
+            assertEquals(0.31, prediction.drawProbability, 0.001)
+        }
+
+        @Test
+        fun shouldHandleTeamsWithAllZeroOrNullPlayerRatings() {
+            // Arrange
+            val playerA1 = PlayerBuilder().withRating(0.0).withMinutes(90).build()
+            val playerA2 = PlayerBuilder().withRating(null).withMinutes(90).build()
+            val teamAZeroRatings = TeamBuilder().withId(1L).withName("Team A Zero Ratings").withPlayers(listOf(playerA1, playerA2)).build()
+
+            val playerB1 = PlayerBuilder().withRating(0.0).withMinutes(90).build()
+            val playerB2 = PlayerBuilder().withRating(null).withMinutes(90).build()
+            val teamBZeroRatings = TeamBuilder().withId(2L).withName("Team B Zero Ratings").withPlayers(listOf(playerB1, playerB2)).build()
+
+            `when`(teamRepository.findByIdWithPlayers(1L)).thenReturn(teamAZeroRatings)
+            `when`(teamRepository.findByIdWithPlayers(2L)).thenReturn(teamBZeroRatings)
+
+            // Act
+            val prediction = teamService.predictMatch(1L, 2L)
+
+            // Assert
+            assertNull(prediction.predictedWinner) // Should be a draw
+            assertEquals(0.0, prediction.winProbabilityHomeTeam, 0.001)
+            assertEquals(0.0, prediction.winProbabilityAwayTeam, 0.001)
+            assertEquals(0.34, prediction.drawProbability, 0.001)
         }
     }
 }

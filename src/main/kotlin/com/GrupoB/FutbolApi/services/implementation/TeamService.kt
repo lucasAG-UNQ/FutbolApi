@@ -14,6 +14,7 @@ import org.json.JSONObject
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import java.util.Locale
 import kotlin.math.exp
 import kotlin.math.pow
 
@@ -107,13 +108,17 @@ class TeamService(
 
         val strengthRatio = if (strengthB > 0) strengthA / strengthB else 1.0
 
-        val drawProbability = maxDrawChance * exp(-(strengthRatio - 1).pow(2) / drawFactor)
+        val rawDrawProbability = maxDrawChance * exp(-(strengthRatio - 1).pow(2) / drawFactor)
 
-        val remainingProbability = 1 - drawProbability
+        val remainingProbability = 1 - rawDrawProbability
         val totalStrength = strengthA + strengthB
 
-        val winProbabilityA = if (totalStrength > 0) remainingProbability * (strengthA / totalStrength) else 0.0
-        val winProbabilityB = if (totalStrength > 0) remainingProbability * (strengthB / totalStrength) else 0.0
+        val rawWinProbabilityA = if (totalStrength > 0) remainingProbability * (strengthA / totalStrength) else 0.0
+        val rawWinProbabilityB = if (totalStrength > 0) remainingProbability * (strengthB / totalStrength) else 0.0
+
+        val winProbabilityA = String.format(Locale.US, "%.2f", rawWinProbabilityA).toDouble()
+        val winProbabilityB = String.format(Locale.US, "%.2f", rawWinProbabilityB).toDouble()
+        val drawProbability = String.format(Locale.US, "%.2f", rawDrawProbability).toDouble()
 
         val predictedWinner = when {
             winProbabilityA > winProbabilityB -> SimpleTeamDTO.fromModel(homeTeam)

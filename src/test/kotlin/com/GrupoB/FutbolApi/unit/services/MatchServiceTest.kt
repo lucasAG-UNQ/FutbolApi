@@ -126,6 +126,46 @@ class MatchServiceTest {
             assertEquals(0, result.losses)
             assertEquals(3, result.goalsFor)
             assertEquals(2, result.goalsAgainst)
+            assertEquals(50.0, result.winPercentage)
+            assertEquals(1.5, result.averageGoalsFor)
+            assertEquals(1.0, result.averageGoalsAgainst)
+            assertEquals(1, result.longestWinStreak)
+        }
+
+        @Test
+        fun shouldCalculateTeamStatsWithVariousMatchOutcomesAndStreaks() {
+            val opponentTeam1 = TeamBuilder().withId(2L).build()
+            val opponentTeam2 = TeamBuilder().withId(3L).build()
+            val opponentTeam3 = TeamBuilder().withId(4L).build()
+            val opponentTeam4 = TeamBuilder().withId(5L).build()
+
+            val matches = listOf(
+                // Win (Home) - Streak starts
+                MatchBuilder().withHomeTeam(team).withAwayTeam(opponentTeam1).withHomeScore(3).withAwayScore(1).withDate(LocalDate.now().minusDays(5)).build(),
+                // Win (Away) - Streak continues
+                MatchBuilder().withHomeTeam(opponentTeam2).withAwayTeam(team).withHomeScore(0).withAwayScore(2).withDate(LocalDate.now().minusDays(4)).build(),
+                // Draw (Home) - Streak breaks, longest streak is 2
+                MatchBuilder().withHomeTeam(team).withAwayTeam(opponentTeam3).withHomeScore(1).withAwayScore(1).withDate(LocalDate.now().minusDays(3)).build(),
+                // Loss (Away) - Streak is 0
+                MatchBuilder().withHomeTeam(opponentTeam4).withAwayTeam(team).withHomeScore(2).withAwayScore(0).withDate(LocalDate.now().minusDays(2)).build(),
+                // Win (Home) - Streak starts again
+                MatchBuilder().withHomeTeam(team).withAwayTeam(opponentTeam1).withHomeScore(4).withAwayScore(0).withDate(LocalDate.now().minusDays(1)).build()
+            )
+
+            `when`(matchRepository.findFinishedMatchesByTeamId(teamId, LocalDate.now())).thenReturn(matches)
+            `when`(teamService.getTeamFromFootballDataApi(any())).thenReturn(null)
+
+            val result = matchService.getTeamStats(teamId)
+
+            assertEquals(3, result.wins)
+            assertEquals(1, result.draws)
+            assertEquals(1, result.losses)
+            assertEquals(10, result.goalsFor)
+            assertEquals(4, result.goalsAgainst)
+            assertEquals(60.0, result.winPercentage)
+            assertEquals(2.0, result.averageGoalsFor)
+            assertEquals(0.8, result.averageGoalsAgainst)
+            assertEquals(2, result.longestWinStreak) // Longest streak was 2
         }
     }
 

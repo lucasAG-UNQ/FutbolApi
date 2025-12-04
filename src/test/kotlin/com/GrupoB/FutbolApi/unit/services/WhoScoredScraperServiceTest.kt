@@ -1,5 +1,6 @@
 package com.grupob.futbolapi.unit.services
 
+import com.grupob.futbolapi.exceptions.PlayerNotFoundException
 import com.grupob.futbolapi.exceptions.TeamNotFoundException
 import com.grupob.futbolapi.services.implementation.WhoScoredScraperService
 import okhttp3.OkHttpClient
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
@@ -345,6 +347,155 @@ class WhoScoredScraperServiceTest {
             assertThrows(TeamNotFoundException::class.java) {
                 scraperService.getTeam(100L)
             }
+        }
+    }
+
+
+    @Nested
+    @DisplayName("getPlayerById")
+    inner class GetPlayer{
+
+        @Test
+        fun getPlayerByIdShouldReturnAPlayerWhenTheApiCallIsSuccessful() {
+            val mockResponse = MockResponse()
+                .setResponseCode(200)
+                .setBody("""
+                {
+                    "playerTableStats": [
+                        {
+                            "name": "Lamine Yamal",
+                            "positionText": "Forward",
+                            "age": 18,
+                            "apps": 10,
+                            "minsPlayed": 814,
+                            "goal": 5,
+                            "assistTotal": 7,
+                            "yellowCard": 0,
+                            "redCard": 0,
+                            "rating": 8.25,
+                            "tournamentName": "LaLiga",
+                            "seasonName": "2025/2026"
+                        }
+                    ]
+                }
+            """.trimIndent())
+            server.enqueue(mockResponse)
+
+            val player = scraperService.getPlayerById(1L)
+
+            assertEquals("Lamine Yamal", player.name)
+            assertEquals(18, player.age)
+            assertEquals(10, player.apps)
+            assertEquals(5, player.goals)
+            assertEquals(8.25, player.rating)
+        }
+
+        @Test
+        fun getPlayerByIdShouldThrowPlayerNotFoundExceptionWhenPlayerTableStatsIsEmpty() {
+            val mockResponse = MockResponse()
+                .setResponseCode(200)
+                .setBody("""{ "playerTableStats": [] }""")
+            server.enqueue(mockResponse)
+
+            assertThrows<PlayerNotFoundException> {
+                scraperService.getPlayerById(1L)
+            }
+        }
+
+        @Test
+        fun getPlayerByIdShouldThrowPlayerNotFoundExceptionOnApiError() {
+            val mockResponse = MockResponse().setResponseCode(500)
+            server.enqueue(mockResponse)
+
+            assertThrows<PlayerNotFoundException> {
+                scraperService.getPlayerById(1L)
+            }
+        }
+
+        @Test
+        fun getPlayerByIdShouldHandleMissingOptionalFieldsGracefully() {
+            val mockResponse = MockResponse()
+                .setResponseCode(200)
+                .setBody(
+                    """
+                {
+                    "playerTableStats": [
+                        {
+                            "name": "Lamine Yamal",
+                            "age": 18,
+                            "minsPlayed": 814,
+                            "rating": 8.25,
+                            "tournamentName": "LaLiga",
+                            "seasonName": "2025/2026"
+                        }
+                    ]
+                }
+            """.trimIndent()
+                )
+            server.enqueue(mockResponse)
+
+            val player = scraperService.getPlayerById(1L)
+
+            assertEquals("Lamine Yamal", player.name)
+            assertEquals(18, player.age)
+            assertEquals(0, player.apps) // Default value
+            assertEquals(0, player.goals) // Default value
+            assertEquals(8.25, player.rating)
+        }
+
+        @Test
+        fun getPlayerByIdShouldAggregateStatsFromMultipleTournaments() {
+            val mockResponse = MockResponse()
+                .setResponseCode(200)
+                .setBody(
+                    """
+                {
+                    "playerTableStats": [
+                        {
+                            "name": "Lamine Yamal",
+                            "positionText": "Forward",
+                            "age": 18,
+                            "apps": 10,
+                            "minsPlayed": 814,
+                            "goal": 5,
+                            "assistTotal": 7,
+                            "yellowCard": 0,
+                            "redCard": 0,
+                            "rating": 8.25,
+                            "tournamentName": "LaLiga",
+                            "seasonName": "2025/2026"
+                        },
+                        {
+                            "name": "Lamine Yamal",
+                            "positionText": "Forward",
+                            "age": 18,
+                            "apps": 4,
+                            "minsPlayed": 335,
+                            "goal": 2,
+                            "assistTotal": 1,
+                            "yellowCard": 2,
+                            "redCard": 0,
+                            "rating": 7.82,
+                            "tournamentName": "Champions League",
+                            "seasonName": "2025/2026"
+                        }
+                    ]
+                }
+            """.trimIndent()
+                )
+            server.enqueue(mockResponse)
+
+            val player = scraperService.getPlayerById(1L)
+
+            assertEquals("Lamine Yamal", player.name)
+            assertEquals(18, player.age)
+            assertEquals(14, player.apps)
+            assertEquals(7, player.goals)
+            assertEquals(8, player.assists)
+            assertEquals(2, player.yellowCards)
+            assertEquals(0, player.redCards)
+            assertEquals(8.12, player.rating!!, 0.01)
+            assertEquals("LaLiga, Champions League", player.tournament)
         }
     }
 }
