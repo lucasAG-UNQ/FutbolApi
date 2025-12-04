@@ -14,7 +14,9 @@ import java.util.concurrent.TimeUnit
 class MetricsAspect(private val meterRegistry: MeterRegistry) {
 
     @Pointcut("within(com.grupob.futbolapi.webServices..*)")
-    fun webServiceMethods() {}
+    fun webServiceMethods() {
+        // This pointcut is intentionally empty. It's a placeholder for defining the join points.
+    }
 
     @Around("webServiceMethods()")
     fun recordMetrics(joinPoint: ProceedingJoinPoint): Any? {

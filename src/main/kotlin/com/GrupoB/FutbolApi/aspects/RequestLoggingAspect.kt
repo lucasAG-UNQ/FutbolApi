@@ -21,7 +21,9 @@ class RequestLoggingAspect(
 ) {
 
     @Pointcut("execution(public * com.grupob.futbolapi.webServices.TeamController.*(..))")
-    fun teamControllerMethods() {}
+    fun teamControllerMethods() {
+        // This is a pointcut definition, so it intentionally has no body.
+    }
 
     @Before("teamControllerMethods()")
     fun logRequest(joinPoint: JoinPoint) {

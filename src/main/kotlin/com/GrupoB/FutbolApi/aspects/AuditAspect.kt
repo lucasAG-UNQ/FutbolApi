@@ -20,6 +20,10 @@ class AuditAspect {
 
     @Pointcut("within(com.grupob.futbolapi.webServices..*)")
     fun webServiceMethods() {}
+    /*
+     * This pointcut definition is intentionally empty. It serves as a marker for the @Around advice
+     * to apply to all methods within the `com.grupob.futbolapi.webServices` package and its subpackages.
+     */
 
     @Around("webServiceMethods()")
     fun auditWebServiceCall(joinPoint: ProceedingJoinPoint): Any? {

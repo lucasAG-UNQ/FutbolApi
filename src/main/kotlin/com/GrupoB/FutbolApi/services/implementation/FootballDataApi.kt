@@ -15,14 +15,13 @@ import org.springframework.transaction.annotation.Transactional
 class FootballDataApi : IFootballDataApi {
     val client = OkHttpClient()
     val baseUrl = "https://api.football-data.org/v4"
-    @Value("\${FOOTBALLDATAAPIKEY}")
+    @Value("\${FOOTBALL_DATA_API_KEY}")
     private lateinit var apiKey: String
 
     override fun getTeam(query : String) : JSONObject?{
         var teamsCount = Int.MAX_VALUE
         val threshold = 75
 
-        val maxOffset = 500
 
         var bestTeam: JSONObject? = null
         var bestScore = 0

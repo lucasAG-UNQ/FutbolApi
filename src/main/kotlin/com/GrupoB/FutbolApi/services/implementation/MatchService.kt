@@ -1,6 +1,7 @@
 package com.grupob.futbolapi.services.implementation
 
 import com.grupob.futbolapi.model.Match
+import com.grupob.futbolapi.model.Team
 import com.grupob.futbolapi.model.dto.MatchDTO
 import com.grupob.futbolapi.model.dto.PlayerDTO
 import com.grupob.futbolapi.model.dto.TeamComparisonDTO
@@ -9,7 +10,6 @@ import com.grupob.futbolapi.repositories.MatchRepository
 import com.grupob.futbolapi.services.IMatchService
 import com.grupob.futbolapi.services.ITeamService
 import com.grupob.futbolapi.services.IWhoScoredScraperService
-import org.json.JSONObject
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -21,10 +21,25 @@ class MatchService(
     private val scraperService: IWhoScoredScraperService,
     private val teamService: ITeamService,
     private val matchRepository: MatchRepository
-    ) : IMatchService {
+) : IMatchService {
+
+    private data class CoreStats(
+        val wins: Int,
+        val draws: Int,
+        val losses: Int,
+        val goalsFor: Int,
+        val goalsAgainst: Int,
+        val longestWinStreak: Int
+    )
+
+    private data class ExternalTeamData(
+        val founded: Int?,
+        val venue: String?,
+        val clubColors: String?
+    )
 
     override fun getNextMatches(teamID: Long): List<MatchDTO> {
-        val team = teamService.getTeamWithPlayers(teamID) ?: return emptyList()
+        val team = teamService.getTeamWithPlayers(teamID)
 
         val nextMatches = matchRepository.findNextMatchesByTeamId(teamID, LocalDate.now())
 
@@ -38,22 +53,18 @@ class MatchService(
 
         val scrapedMatches = scraperService.getNextTeamMatches(teamID)
 
-        val matchesToSave = scrapedMatches.mapNotNull { matchDto ->
+        val matchesToSave = scrapedMatches.map { matchDto ->
             val homeTeam = if (teamID == matchDto.homeTeam.teamID) team else teamService.getTeamWithPlayers(matchDto.homeTeam.teamID)
             val awayTeam = if (teamID == matchDto.awayTeam.teamID) team else teamService.getTeamWithPlayers(matchDto.awayTeam.teamID)
 
-            if (homeTeam != null && awayTeam != null) {
-                Match(
-                    homeTeam = homeTeam,
-                    awayTeam = awayTeam,
-                    date = matchDto.date,
-                    tournament = matchDto.tournament,
-                    homeScore = matchDto.homeScore,
-                    awayScore = matchDto.awayScore
-                )
-            } else {
-                null
-            }
+            Match(
+                homeTeam = homeTeam,
+                awayTeam = awayTeam,
+                date = matchDto.date,
+                tournament = matchDto.tournament,
+                homeScore = matchDto.homeScore,
+                awayScore = matchDto.awayScore
+            )
         }
 
         if (matchesToSave.isNotEmpty()) {
@@ -69,14 +80,47 @@ class MatchService(
     }
 
     override fun getTeamStats(teamID: Long): TeamStatsDTO {
-        val team = teamService.getTeamWithPlayers(teamID)!!
-        var finishedMatches = matchRepository.findFinishedMatchesByTeamId(teamID, LocalDate.now())
+        val team = teamService.getTeamWithPlayers(teamID)
+        val finishedMatches = loadFinishedMatchesForTeam(team)
+        val coreStats = calculateCoreStats(teamID, finishedMatches)
+        val externalData = fetchExternalTeamData(team.name)
+        val mvp = findMvp(team)
 
+        val totalMatches = finishedMatches.size
+        val winPercentage = if (totalMatches > 0) (coreStats.wins.toDouble() / totalMatches) * 100 else 0.0
+        val averageGoalsFor = if (totalMatches > 0) coreStats.goalsFor.toDouble() / totalMatches else 0.0
+        val averageGoalsAgainst = if (totalMatches > 0) coreStats.goalsAgainst.toDouble() / totalMatches else 0.0
+
+        return TeamStatsDTO(
+            teamId = teamID,
+            teamName = team.name,
+            totalMatches = totalMatches,
+            wins = coreStats.wins,
+            draws = coreStats.draws,
+            losses = coreStats.losses,
+            winPercentage = winPercentage,
+            goalsFor = coreStats.goalsFor,
+            goalsAgainst = coreStats.goalsAgainst,
+            averageGoalsFor = averageGoalsFor,
+            averageGoalsAgainst = averageGoalsAgainst,
+            longestWinStreak = coreStats.longestWinStreak,
+            founded = externalData.founded,
+            venue = externalData.venue,
+            clubColors = externalData.clubColors,
+            mvp = mvp
+        )
+    }
+
+    private fun loadFinishedMatchesForTeam(team: Team): List<Match> {
+        var finishedMatches = matchRepository.findFinishedMatchesByTeamId(team.id!!, LocalDate.now())
         if (finishedMatches.isEmpty() || team.lastUpdatedMatches == null || team.lastUpdatedMatches!!.isBefore(LocalDateTime.now().minusDays(1))) {
-            getNextMatches(teamID)
-            finishedMatches = matchRepository.findFinishedMatchesByTeamId(teamID, LocalDate.now())
+            getNextMatches(team.id!!)
+            finishedMatches = matchRepository.findFinishedMatchesByTeamId(team.id!!, LocalDate.now())
         }
+        return finishedMatches
+    }
 
+    private fun calculateCoreStats(teamID: Long, finishedMatches: List<Match>): CoreStats {
         var wins = 0
         var draws = 0
         var losses = 0
@@ -123,37 +167,19 @@ class MatchService(
         if (currentStreak > longestWinStreak) {
             longestWinStreak = currentStreak
         }
+        return CoreStats(wins, draws, losses, goalsFor, goalsAgainst, longestWinStreak)
+    }
 
-        val totalMatches = finishedMatches.size
-        val winPercentage = if (totalMatches > 0) (wins.toDouble() / totalMatches) * 100 else 0.0
-        val averageGoalsFor = if (totalMatches > 0) goalsFor.toDouble() / totalMatches else 0.0
-        val averageGoalsAgainst = if (totalMatches > 0) goalsAgainst.toDouble() / totalMatches else 0.0
-
-        val footballDataTeam = teamService.getTeamFromFootballDataApi(team.name)
+    private fun fetchExternalTeamData(teamName: String): ExternalTeamData {
+        val footballDataTeam = teamService.getTeamFromFootballDataApi(teamName)
         val founded = footballDataTeam?.optInt("founded")
         val venue = footballDataTeam?.optString("venue")
         val clubColors = footballDataTeam?.optString("clubColors")
+        return ExternalTeamData(founded, venue, clubColors)
+    }
 
-        val mvp = team.players.maxByOrNull { p -> p.rating?: Double.MIN_VALUE }?.let { PlayerDTO.fromModel(it) }
-
-        return TeamStatsDTO(
-            teamId = teamID,
-            teamName = team.name,
-            totalMatches = totalMatches,
-            wins = wins,
-            draws = draws,
-            losses = losses,
-            winPercentage = winPercentage,
-            goalsFor = goalsFor,
-            goalsAgainst = goalsAgainst,
-            averageGoalsFor = averageGoalsFor,
-            averageGoalsAgainst = averageGoalsAgainst,
-            longestWinStreak = longestWinStreak,
-            founded = founded,
-            venue = venue,
-            clubColors = clubColors,
-            mvp = mvp
-        )
+    private fun findMvp(team: Team): PlayerDTO? {
+        return team.players.maxByOrNull { p -> p.rating ?: Double.MIN_VALUE }?.let { PlayerDTO.fromModel(it) }
     }
 
     override fun compareTeams(teamAId: Long, teamBId: Long): TeamComparisonDTO {

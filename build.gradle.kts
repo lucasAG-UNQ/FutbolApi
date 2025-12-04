@@ -47,29 +47,43 @@ configurations {
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        val runIntegration = System.getProperty("runIntegration")
+
+        if (runIntegration == "true") {
+            includeTags("integration")
+        } else {
+            excludeTags("integration")
+        }
+    }
+
     finalizedBy(tasks.jacocoTestReport)
 }
 
 tasks.jacocoTestReport {
+    dependsOn(tasks.test)   // ensures tests run before coverage
+
     reports {
-        xml.required.set(true)   // XML is needed by SonarCloud
+        xml.required.set(true)
         html.required.set(true)
     }
-    classDirectories.setFrom(files(classDirectories.files.map {
-        fileTree(it) {
+
+    // Fixes the Gradle 8 "implicit dependency" error
+    classDirectories.setFrom(
+        fileTree("${buildDir}/classes/kotlin/main") {
             exclude(
                 "**/integration/**",
                 "**/aspects/**",
                 "**/config/**",
                 "**/dto/**",
                 "**/security/**",
-                "**/FutbolApiApplication.kt"
+                "**/FutbolApiApplication*"
             )
         }
-    }))
-    sourceSets(sourceSets.main.get())
-    executionData.setFrom(fileTree(buildDir).include("**/jacoco/test.exec"))
+    )
+
+    sourceDirectories.setFrom(files("src/main/kotlin"))
+    executionData.setFrom(fileTree(buildDir).include("/jacoco/test.exec"))
 }
 
 repositories {

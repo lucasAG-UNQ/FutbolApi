@@ -20,5 +20,5 @@ jobs:
       - name: Test with Gradle
         run: ./gradlew test
         env:
-          FOOTBALLDATAAPIKEY: ${{ secrets.FOOTBALLDATAAPIKEY }}
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
 
