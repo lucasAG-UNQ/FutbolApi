@@ -21,7 +21,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build & Test
-        run: ./gradlew clean build test jacocoTestReport
+        run: ./gradlew clean test jacocoTestReport -PrunIntegration=true
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
